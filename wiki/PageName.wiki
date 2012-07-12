@@ -18,8 +18,8 @@ provide :
 and then sign in to your vtiger website.
 
 once it is done, you will have 3 groups added in  contacts :
-vtiger leads,
-vtiger accounts,
-vtiger contacts
+ * vtiger leads,
+ * vtiger accounts,
+ * vtiger contacts
 
 and corresponding contacts appear in contacts list.
