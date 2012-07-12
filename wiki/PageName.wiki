@@ -6,8 +6,7 @@ Compile and setup app in your android equipment.
 
 
 = Details =
-Create a vtiger account in your android account and settings.
-
+Add a vtiger crm account in your android equipment, 
 provide :
 
  * vtiger username 
