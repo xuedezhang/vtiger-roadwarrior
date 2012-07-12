@@ -10,9 +10,9 @@ Create a vtiger account in your android account and settings.
 
 provide :
 
-vtiger username
-vtiger api accesskey (retrieve it from your vtiger profile preferences)
-vtiger url (eg : )
+ * vtiger username 
+ * vtiger api accesskey (retrieve it from your vtiger profile preferences)
+ * vtiger url (eg : )
 
 
 and then sign in to your vtiger website.
