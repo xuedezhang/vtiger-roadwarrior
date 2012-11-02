@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android">
+ 
+        <EditTextPreference android:key="username"
+                android:title="@string/login_activity_username_label" android:summary="@string/login_activity_username_label"
+                android:defaultValue="@string/login_label" />
+        <EditTextPreference android:key="password"
+                android:title="@string/login_activity_password_label" 
+                android:summary="@string/login_activity_password_label" android:defaultValue="@string/login_activity_password_label" />
+        <EditTextPreference android:key="vtiger_url"
+                android:defaultValue="@string/http_label"
+                android:title="@string/vtiger_url" android:summary="@string/http_label" />
+
+        
+</PreferenceScreen>
+

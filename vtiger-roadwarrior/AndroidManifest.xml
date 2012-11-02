@@ -90,6 +90,17 @@
                 someone who explicitly knows the class name
             -->
         </activity>
+		<!-- prefs -->
+		 <activity
+	   android:label="Account preferences"
+ 	 	 android:name=".AccountPreferences">
+   <intent-filter>
+      <action
+         android:name="my.account.preference.MAIN" />
+      <category
+         android:name="android.intent.category.DEFAULT" />
+    </intent-filter>
+ </activity>
 
     </application>
 

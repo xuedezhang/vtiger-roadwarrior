@@ -21,11 +21,12 @@ import android.util.Log;
 import org.json.JSONObject;
 
 /**
- * Represents a sample SyncAdapter user
+ * Represents a  SyncAdapter user
  */
 public class User {
+    private final static String TAG = "User";
 
-    private final String mUserName;
+	private final String mUserName;
     private final String mFirstName;
     private final String mLastName;
     private final String mCellPhone;
@@ -175,10 +176,20 @@ public class User {
      * Creates and returns an instance of the user from the provided JSON data.
      * 
      * @param user The JSONObject containing user data
-     * @return user The new instance of Voiper user created from the JSON data.
+     * @return user The new instance of  user created from the JSON data.
      */
     public static User valueOf(JSONObject user) {
-        try {
+    	String address = null;
+    	String country = null;
+    	String city = null;        
+    	String pobox = null;
+    	String postcode = null;
+    	String ship_address = null;
+    	String ship_country = null;
+
+    	try {
+        	Log.i(TAG,"Valueof");
+        	Log.i(TAG,user.toString());
             final String firstName = user.has("firstname") ? user.getString("firstname") : null;
             final String lastName = user.has("lastname") ? user.getString("lastname") : null;
             final String cellPhone = user.has("mobile") ? user.getString("mobile") : null;
@@ -191,15 +202,67 @@ public class User {
              //  ACCOUNTS
             final String organisation = user.has("accountname") ? user.getString("accountname") : null;
             final String Phone = user.has("phone") ? user.getString("phone") : null;
-            // FIXME: gerer ship et bill address
-            final String address = user.has("bill_street") ? user.getString("bill_street") : null;
-            final String country = user.has("bill_country") ? user.getString("bill_country") : null;
-            final String city = user.has("bill_city") ? user.getString("bill_city") : null;
+            // contacts
+            if (user.has("mailingstreet"))
+            {
+            	address = user.getString("mailingstreet");
+            }
+            if (user.has("mailingcountry"))
+            {
+            	country = user.getString("mailingcountry");
+            }
+            if (user.has("mailingcity"))
+            {
+            	city = user.getString("mailingcity");
+            }
+            if (user.has("mailingpobox"))
+            {
+            	pobox = user.getString("mailingpobox");
+            }
+            if (user.has("mailingzip"))
+            {
+            	postcode = user.getString("mailingzip");
+            }
+            if (user.has("otherstreet"))
+            {
+            	ship_address = user.getString("otherstreet");
+            }
+            if (user.has("othercountry"))
+            {
+            	ship_country= user.getString("othercountry");
+            }
+
+            // accounts
+            if (user.has("bill_street"))
+            {
+            	address = user.getString("bill_street");
+            }
+            if (user.has("bill_country"))
+            {
+            	country = user.getString("bill_country");
+            }
+            if (user.has("bill_city"))
+            {
+            	city = user.getString("bill_city");
+            }
+            if (user.has("bill_pobox"))
+            {
+            	pobox = user.getString("bill_pobox");
+            }
+            if (user.has("bill_code"))
+            {
+            	postcode = user.getString("bill_code");
+            }
+
             final String region = user.has("bill_state") ? user.getString("bill_state") : null;
-            final String pobox = user.has("bill_pobox") ? user.getString("bill_pobox") : null;
-            final String postcode = user.has("bill_code") ? user.getString("bill_code") : null;
-            final String ship_address = user.has("ship_street") ? user.getString("ship_street") : null;
-            final String ship_country = user.has("ship_country") ? user.getString("ship_country") : null;
+            if (user.has("ship_street"))
+            {
+            	ship_address = user.getString("ship_street");
+            }
+            if (user.has("ship_country"))
+            {
+            	ship_country = user.getString("ship_country");
+            }
             final String ship_city = user.has("ship_city") ? user.getString("ship_city") : null;
             final String ship_region = user.has("ship_state") ? user.getString("ship_state") : null;
             final String ship_pobox = user.has("ship_pobox") ? user.getString("ship_pobox") : null;
@@ -237,7 +300,6 @@ public class User {
                     industry,annual_revenue,
 
                     deleted, userId);
-
             }
             final String account_no = user.has("account_no") ? user.getString("account_no") : null;
             if (account_no != null){

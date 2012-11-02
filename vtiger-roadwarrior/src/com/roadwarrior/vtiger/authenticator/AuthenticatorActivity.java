@@ -24,8 +24,10 @@ import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
@@ -81,6 +83,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
     public void onCreate(Bundle icicle) {
         Log.i(TAG, "onCreate(" + icicle + ")");
         super.onCreate(icicle);
+       
         mAccountManager = AccountManager.get(this);
         Log.i(TAG, "loading data from Intent");
         final Intent intent = getIntent();
@@ -93,6 +96,17 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         Log.i(TAG, "    request new: " + mRequestNewAccount);
         requestWindowFeature(Window.FEATURE_LEFT_ICON);
         setContentView(R.layout.login_activity);
+        
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+        mUsernameEdit = (EditText) findViewById(R.id.username_edit);
+        mPasswordEdit = (EditText) findViewById(R.id.password_edit);
+        mUrlEdit =  (EditText) findViewById(R.id.url_edit);
+
+        mUsernameEdit.setText(prefs.getString("username", getText(R.string.login_label).toString()));
+        mPasswordEdit.setText(prefs.getString("password", getText(R.string.accesskey_label).toString()));
+        mUrlEdit.setText(prefs.getString("vtiger_url", getText(R.string.http_label).toString()));
+
         getWindow().setFeatureDrawableResource(Window.FEATURE_LEFT_ICON,
             android.R.drawable.ic_dialog_alert);
 
@@ -100,7 +114,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         mUsernameEdit = (EditText) findViewById(R.id.username_edit);
         mPasswordEdit = (EditText) findViewById(R.id.password_edit);
         mUrlEdit =  (EditText) findViewById(R.id.url_edit);
-        mUsernameEdit.setText(mUsername);
+        
         mMessage.setText(getMessage());
     }
 
@@ -137,6 +151,8 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         }
         mPassword = mPasswordEdit.getText().toString();
         mUrl = mUrlEdit.getText().toString();
+     	// record auth settings
+   	 
         if (TextUtils.isEmpty(mUrl)||TextUtils.isEmpty(mUsername) || TextUtils.isEmpty(mPassword)) {
             mMessage.setText(getMessage());
         } else {
@@ -145,6 +161,9 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
             mAuthThread =
                 NetworkUtilities.attemptAuth(mUsername, mPassword, mUrl,mHandler,
                     AuthenticatorActivity.this);
+
+           
+
         }
     }
 
@@ -227,6 +246,16 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
             } else {
                 finishConfirmCredentials(true);
             }
+            // store valid login values in preferences
+            Log.i(TAG,"Storing values in preferences");
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putString("vtiger_url",mUrl);
+            editor.putString("username",mUsername);
+            editor.putString("password",mPassword);
+            editor.commit();
+
+
         } else {
             Log.e(TAG, "onAuthenticationResult: failed to authenticate");
             if (mRequestNewAccount) {

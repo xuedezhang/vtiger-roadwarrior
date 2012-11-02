@@ -118,7 +118,7 @@ final public class NetworkUtilities {
     }
 
     /**
-     * Connects to the Voiper server, authenticates the provided username and
+     * Connects to the  server, authenticates the provided username and
      * password.
      * 
      * @param username The user's username
@@ -350,7 +350,7 @@ final public class NetworkUtilities {
         params.add(new BasicNameValuePair(PARAM_SESSIONNAME, sessionName));
         params.add(new BasicNameValuePair("modifiedTime","878925701" )); // il y a 14 ans.... 
         params.add(new BasicNameValuePair("elementType",type_contact));  // "Accounts,Leads , Contacts... 
-
+        Log.i(TAG,"fetchFriendUpdates");
         //   params.add(new BasicNameValuePair(PARAM_QUERY, "select firstname,lastname,mobile,email,homephone,phone from Contacts;"));
 //        if (lastUpdated != null) {
 //            final SimpleDateFormat formatter =
@@ -361,11 +361,6 @@ final public class NetworkUtilities {
 //        }
         Log.i(TAG, params.toString());
 
-// FIXME: code cleanup
-//        HttpEntity entity = null;
-//        entity = new UrlEncodedFormEntity(params);
-//        Log.i(TAG,URLEncodedUtils.format(params, "utf-8"));
-
         final HttpGet post = new HttpGet(AUTH_URI+"?"+URLEncodedUtils.format(params, "utf-8"));
        // post.addHeader(entity.getContentType());
         post.addHeader("accept","application/json");
@@ -374,18 +369,24 @@ final public class NetworkUtilities {
        // maybeCreateHttpClient();
 
         final HttpResponse resp = getHttpClient().execute(post);
-        final String response = EntityUtils.toString(resp.getEntity());
 
         if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
             // Succesfully connected to the samplesyncadapter server and
             // authenticated.
             // Extract friends data in json format.
+            String response = EntityUtils.toString(resp.getEntity());
          	Log.i(TAG,"--response--");
         	Log.i(TAG, response);
+        	// <Hack> to bypass vtiger 5.4 webservice bug:
+        	int idx  = response.indexOf("{\"success");
+        	response = response.substring(idx);
+        	Log.i(TAG, response);
+        	// </Hack>
         	Log.i(TAG,"--response end--");
         	JSONObject result=new JSONObject(response);
             Log.i(TAG,result.getString("result"));
             String success = result.getString("success");
+            Log.i(TAG,"success is"+success);
             if (success == "true")
             {
             final JSONObject data = new JSONObject(result.getString("result"));
@@ -395,7 +396,13 @@ final public class NetworkUtilities {
                 friendList.add(User.valueOf(friends.getJSONObject(i)));
             }
             }
+            else {
+            	
             // FIXME: else false...
+            // possible error code :
+            //{"success":false,"error":{"code":"AUTHENTICATION_REQUIRED","message":"Authencation required"}}
+            //            	throw new AuthenticationException();
+            }
         } else {
             if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
                 Log.e(TAG,

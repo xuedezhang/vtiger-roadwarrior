@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
+
 /**
  * Service to handle Account authentication. It instantiates the authenticator
  * and returns its IBinder.
@@ -32,7 +33,7 @@ public class AuthenticationService extends Service {
     @Override
     public void onCreate() {
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
-            Log.v(TAG, "SampleSyncAdapter Authentication Service started.");
+            Log.v(TAG, "Vtiger Authentication Service started.");
         }
         mAuthenticator = new Authenticator(this);
     }
@@ -40,7 +41,7 @@ public class AuthenticationService extends Service {
     @Override
     public void onDestroy() {
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
-            Log.v(TAG, "SampleSyncAdapter Authentication Service stopped.");
+            Log.v(TAG, "VTiger Authentication Service stopped.");
         }
     }
 

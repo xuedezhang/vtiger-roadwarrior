@@ -78,10 +78,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             // list. So let's set the flag that causes them to be visible, so that users
             // can actually see these contacts.
             if (lastSyncMarker == 0) {
+            	Log.i(TAG,"set Accounts visible");
                 ContactManager.setAccountContactsVisibility(getContext(), account, true);
             }
-        List<User> users,users_accounts,users_leads;
-        List<Status> statuses;
+            List<User> users,users_accounts,users_leads;
+            List<Status> statuses;
 
              // use the account manager to request the credentials
              authtoken =
@@ -110,8 +111,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             // update platform contacts.
             Log.d(TAG, "Calling contactManager's sync contacts");
             long newSyncState = ContactManager.syncContacts(mContext, account.name, users,groupId,lastSyncMarker);
-		// FIXME: gestion newSyncState            
-		ContactManager.syncContacts(mContext, account.name, users_leads,groupId1,lastSyncMarker);
+            // FIXME: gestion newSyncState            
+            ContactManager.syncContacts(mContext, account.name, users_leads,groupId1,lastSyncMarker);
             ContactManager.syncContacts(mContext, account.name, users_accounts,groupId2,lastSyncMarker);
             // fetch and update status messages for all the synced users.
             statuses = NetworkUtilities.fetchFriendStatuses(account, authtoken);
