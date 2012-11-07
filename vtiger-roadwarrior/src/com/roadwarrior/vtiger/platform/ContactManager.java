@@ -62,7 +62,9 @@ public class ContactManager {
     
     public static long ensureSampleGroupExists(Context context, Account account,String GroupName) {
         final ContentResolver resolver = context.getContentResolver();
-
+        
+        Log.i(TAG,"ensureSampleGroupExists");
+        
         // Lookup the sample group
         long groupId = 0;
         final Cursor cursor = resolver.query(Groups.CONTENT_URI, new String[] { Groups._ID },
@@ -81,10 +83,12 @@ public class ContactManager {
 
         if (groupId == 0) {
             // Sample group doesn't exist yet, so create it
+        	Log.i(TAG,"Creating group "+ GroupName);
             final ContentValues contentValues = new ContentValues();
             contentValues.put(Groups.ACCOUNT_NAME, account.name);
             contentValues.put(Groups.ACCOUNT_TYPE, account.type);
             contentValues.put(Groups.TITLE, GroupName);
+            contentValues.put(Groups.GROUP_VISIBLE, true);
            // contentValues.put(Groups.GROUP_IS_READ_ONLY, true);
 
             final Uri newGroupUri = resolver.insert(Groups.CONTENT_URI, contentValues);

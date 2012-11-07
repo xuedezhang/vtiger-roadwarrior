@@ -73,8 +73,7 @@ final public class NetworkUtilities {
     public static final String PARAM_ACCESSKEY = "accessKey";
     public static final String USER_AGENT = "AuthenticationService/1.0";
     public static final int HTTP_REQUEST_TIMEOUT_MS = 30 * 1000; // ms
-    public static final String BASE_URL =
-        "http://demo.vtiger.com";
+    public static final String BASE_URL = "http://demo.vtiger.com";
     public static String AUTH_URI = BASE_URL + "/webservice.php";
     public static final String FETCH_FRIEND_UPDATES_URI =
         BASE_URL + "/fetch_friend_updates";
@@ -136,40 +135,24 @@ final public class NetworkUtilities {
         //FIXME:
         AUTH_URI = base_url+ "/webservice.php";
         // =========== get challenge token ==============================
-        //username = "admin";
-        //accessKey =  "XwwUhB8KmUW3jiJm";
-        //accessKey = "Z4Bog5TjkXU8E0";
-       // ===code inutil FIXME
         final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair(PARAM_OPERATION, "getchallenge"));
-        params.add(new BasicNameValuePair(PARAM_USERNAME, username));
-        HttpEntity entity = null;
-        try {
-            entity = new UrlEncodedFormEntity(params);
-        } catch (final UnsupportedEncodingException e) {
-            // this should never happen.
-            throw new IllegalStateException(e);
-        }
-        //final HttpPost post = new HttpPost(AUTH_URI);
-        final HttpGet post = new HttpGet(AUTH_URI+"?operation=getchallenge&username="+username);
-        post.addHeader(entity.getContentType());
-       // post.setEntity(entity);
-
  
         try {
-            ResponseHandler<String> resphandler = new BasicResponseHandler();
-            String body = getHttpClient().execute(post, resphandler);
-            Log.i(TAG,"message");
-            Log.i(TAG,body);
-            JSONObject result=new JSONObject(body);
-            Log.i(TAG,result.getString("result"));
+			HttpGet httpGet = new HttpGet(AUTH_URI+"?operation=getchallenge&username="+username);
+			ResponseHandler<String> resphandler = new BasicResponseHandler();
+			String body = getHttpClient().execute(httpGet, resphandler);
+			Log.i(TAG,"message");
+			Log.i(TAG,body);
+			JSONObject result=new JSONObject(body);
+			Log.i(TAG,result.getString("result"));
             JSONObject data=new JSONObject(result.getString("result"));
             token = data.getString("token");
             Log.i(TAG,token);
+            httpGet.abort();            
         } catch (ClientProtocolException e) {
         	Log.i(TAG,"http protocol error");
             Log.e(TAG, e.getMessage());
-          
+           return false;
         } catch (IOException e) {
         	Log.e(TAG,"IO Exception");
             //Log.e(TAG, e.getMessage());
@@ -181,6 +164,7 @@ final public class NetworkUtilities {
         	Log.i(TAG,"json excpetion");
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return false;
 		}
         // ================= login ==================
 
@@ -217,10 +201,8 @@ final public class NetworkUtilities {
             throw new AssertionError(e);
         }
         final HttpPost post2 = new HttpPost(AUTH_URI);
-        post2.addHeader(entity2.getContentType());
         post2.setEntity(entity2);
-        
-        //FIXME:maybeCreateHttpClient();
+
         Log.i(TAG,"login");
         Log.i(TAG,username);
         Log.i(TAG,accessKey);
@@ -253,10 +235,8 @@ final public class NetworkUtilities {
         } catch (ClientProtocolException e) {
         	Log.i(TAG,"http protocol error");
             Log.e(TAG, e.getMessage());
-          
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
- 
         } catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

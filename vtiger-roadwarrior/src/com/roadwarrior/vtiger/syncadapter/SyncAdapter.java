@@ -115,10 +115,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             ContactManager.syncContacts(mContext, account.name, users_leads,groupId1,lastSyncMarker);
             ContactManager.syncContacts(mContext, account.name, users_accounts,groupId2,lastSyncMarker);
             // fetch and update status messages for all the synced users.
-            statuses = NetworkUtilities.fetchFriendStatuses(account, authtoken);
-
-
-            ContactManager.insertStatuses(mContext, account.name, statuses);
+//            statuses = NetworkUtilities.fetchFriendStatuses(account, authtoken);
+//
+//
+//            ContactManager.insertStatuses(mContext, account.name, statuses);
 
 		 // Save off the new sync marker. On our next sync, we only want to receive
             // contacts that have changed since this sync...
