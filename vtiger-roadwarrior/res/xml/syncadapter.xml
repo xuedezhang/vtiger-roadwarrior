@@ -25,4 +25,5 @@
     android:accountType="com.roadwarrior.vtiger"
     android:supportsUploading="false"
     android:userVisible="true"
+    android:isAlwaysSyncable="true"
 />

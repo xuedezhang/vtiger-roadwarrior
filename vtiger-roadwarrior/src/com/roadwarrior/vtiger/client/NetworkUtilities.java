@@ -72,12 +72,11 @@ final public class NetworkUtilities {
     public static final String PARAM_UPDATED = "timestamp";
     public static final String PARAM_ACCESSKEY = "accessKey";
     public static final String USER_AGENT = "AuthenticationService/1.0";
-    public static final int HTTP_REQUEST_TIMEOUT_MS = 30 * 1000; // ms
-    public static final String BASE_URL = "http://demo.vtiger.com";
-    public static String AUTH_URI = BASE_URL + "/webservice.php";
-    public static final String FETCH_FRIEND_UPDATES_URI =
-        BASE_URL + "/fetch_friend_updates";
-    public static final String FETCH_STATUS_URI = BASE_URL + "/fetch_status";
+    public static final int HTTP_REQUEST_TIMEOUT_MS = 500 * 1000; // ms
+    public static String AUTH_URI;
+//    public static final String FETCH_FRIEND_UPDATES_URI =
+//        BASE_URL + "/fetch_friend_updates";
+//    public static final String FETCH_STATUS_URI = BASE_URL + "/fetch_status";
 
     public static  String sessionName;
 
@@ -95,26 +94,7 @@ final public class NetworkUtilities {
         return httpClient;
     }
 
-    /**
-     * Executes the network requests on a separate thread.
-     * 
-     * @param runnable The runnable instance containing network mOperations to
-     *        be executed.
-     */
-    public static Thread performOnBackgroundThread(final Runnable runnable) {
-        final Thread t = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    runnable.run();
-                } finally {
-
-                }
-            }
-        };
-        t.start();
-        return t;
-    }
+   
 
     /**
      * Connects to the  server, authenticates the provided username and
@@ -127,8 +107,7 @@ final public class NetworkUtilities {
      * @return boolean The boolean result indicating whether the user was
      *         successfully authenticated.
      */
-    public static boolean authenticate(String username, String accessKey,String base_url,
-        Handler handler, final Context context) {
+    public static String authenticate(String username, String accessKey,String base_url) {
         final HttpResponse resp;
         String token = null;
         String hash = null;
@@ -136,35 +115,39 @@ final public class NetworkUtilities {
         AUTH_URI = base_url+ "/webservice.php";
         // =========== get challenge token ==============================
         final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
- 
         try {
-			HttpGet httpGet = new HttpGet(AUTH_URI+"?operation=getchallenge&username="+username);
-			ResponseHandler<String> resphandler = new BasicResponseHandler();
-			String body = getHttpClient().execute(httpGet, resphandler);
-			Log.i(TAG,"message");
-			Log.i(TAG,body);
-			JSONObject result=new JSONObject(body);
-			Log.i(TAG,result.getString("result"));
-            JSONObject data=new JSONObject(result.getString("result"));
-            token = data.getString("token");
-            Log.i(TAG,token);
-            httpGet.abort();            
+			final HttpGet httpGet = new HttpGet(AUTH_URI+"?operation=getchallenge&username="+username);
+			
+			final ResponseHandler<String> resphandler = new BasicResponseHandler();
+        	
+			String body;
+			body = getHttpClient().execute(httpGet,resphandler);
+//			if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {  
+//				String body ;
+				
+				Log.i(TAG,"message");
+				Log.i(TAG,body);
+				JSONObject result=new JSONObject(body);
+				Log.i(TAG,result.getString("result"));
+	            JSONObject data=new JSONObject(result.getString("result"));
+	            token = data.getString("token");
+	            Log.i(TAG,token);
+             
         } catch (ClientProtocolException e) {
         	Log.i(TAG,"http protocol error");
             Log.e(TAG, e.getMessage());
-           return false;
+           return null;
         } catch (IOException e) {
         	Log.e(TAG,"IO Exception");
             //Log.e(TAG, e.getMessage());
-            Log.e(TAG,AUTH_URI+"?operation=getchallenge&username="+username);
-            sendResult(false,handler,context);
-        	return false;
+            Log.e(TAG,AUTH_URI+"?operation=getchallenge&username="+username);            
+        	return null;
  
         } catch (JSONException e) {
         	Log.i(TAG,"json excpetion");
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return false;
+			return null;
 		}
         // ================= login ==================
 
@@ -179,14 +162,14 @@ final public class NetworkUtilities {
             e.printStackTrace();
         }
 //        // FIXME: sleep ?
-//        try {
-//			Thread.sleep(1000);
-//		} catch (InterruptedException e1) {
-//			
-//			Log.i(TAG,"sleep fail");
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
+        try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e1) {
+			
+			Log.i(TAG,"sleep fail");
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
     
         params.clear();
         params.add(new BasicNameValuePair(PARAM_OPERATION, "login"));
@@ -207,7 +190,7 @@ final public class NetworkUtilities {
         Log.i(TAG,username);
         Log.i(TAG,accessKey);
         try {
-            ResponseHandler<String> resphandler = new BasicResponseHandler();
+            final ResponseHandler<String> resphandler = new BasicResponseHandler();
             String body = getHttpClient().execute(post2, resphandler);
             Log.i(TAG,"message login");
             Log.i(TAG,body);
@@ -215,6 +198,7 @@ final public class NetworkUtilities {
            
             String success = result.getString("success");
             Log.i(TAG,success);
+            
             if (success == "true")
             	{
             	 Log.i(TAG,result.getString("result"));
@@ -223,12 +207,10 @@ final public class NetworkUtilities {
             	sessionName = data.getString("sessionName");
             
             	Log.i(TAG,sessionName);
-            	sendResult(true,handler,context);
-            	return true;
+            	return token;
             	}
             else {
-            	sendResult(false,handler,context);
-            	return false;
+            	return null;
             }
             //token = data.getString("token");
             //Log.i(TAG,token);
@@ -241,8 +223,7 @@ final public class NetworkUtilities {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
         }
-        sendResult(false,handler,context);
-        return false;
+        return null;
         // ========================================================================
 //        try {
 //            resp = mHttpClient.execute(post);
@@ -273,46 +254,7 @@ final public class NetworkUtilities {
 //        }
     }
 
-    /**
-     * Sends the authentication response from server back to the caller main UI
-     * thread through its handler.
-     * 
-     * @param result The boolean holding authentication result
-     * @param handler The main UI thread's handler instance.
-     * @param context The caller Activity's context.
-     */
-    private static void sendResult(final Boolean result, final Handler handler,
-        final Context context) {
-        if (handler == null || context == null) {
-            return;
-        }
-        handler.post(new Runnable() {
-            public void run() {
-                ((AuthenticatorActivity) context).onAuthenticationResult(result);
-            }
-        });
-    }
-
-    /**
-     * Attempts to authenticate the user credentials on the server.
-     * 
-     * @param username The user's username
-     * @param password The user's password to be authenticated
-     * @param handler The main UI thread's handler instance.
-     * @param context The caller Activity's context
-     * @return Thread The thread on which the network mOperations are executed.
-     */
-    public static Thread attemptAuth(final String username,
-        final String password, final String url,final Handler handler, final Context context) {
-        final Runnable runnable = new Runnable() {
-            public void run() {
-                authenticate(username, password, url, handler, context);
-            }
-        };
-        // run on background thread.
-        return NetworkUtilities.performOnBackgroundThread(runnable);
-    }
-
+   
     /**
      * Fetches the list of friend data updates from the server
      * 

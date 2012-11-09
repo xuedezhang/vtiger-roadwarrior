@@ -24,6 +24,7 @@ import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -52,9 +53,12 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
     private static final String TAG = "AuthenticatorActivity";
 
     private AccountManager mAccountManager;
-    private Thread mAuthThread;
-    private String mAuthtoken;
-    private String mAuthtokenType;
+
+    /** Keep track of the login task so can cancel it if requested */
+    private UserLoginTask mAuthTask = null;
+
+    /** Keep track of the progress dialog so we can dismiss it */
+    private ProgressDialog mProgressDialog = null;
 
     /**
      * If set we are just checking that the user knows their credentials; this
@@ -88,7 +92,6 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         Log.i(TAG, "loading data from Intent");
         final Intent intent = getIntent();
         mUsername = intent.getStringExtra(PARAM_USERNAME);
-        mAuthtokenType = intent.getStringExtra(PARAM_AUTHTOKEN_TYPE);
         mRequestNewAccount = mUsername == null;
         mConfirmCredentials =
             intent.getBooleanExtra(PARAM_CONFIRMCREDENTIALS, false);
@@ -122,20 +125,23 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
      * {@inheritDoc}
      */
     @Override
-    protected Dialog onCreateDialog(int id) {
+    protected Dialog onCreateDialog(int id, Bundle args) {
         final ProgressDialog dialog = new ProgressDialog(this);
         dialog.setMessage(getText(R.string.ui_activity_authenticating));
         dialog.setIndeterminate(true);
         dialog.setCancelable(true);
         dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             public void onCancel(DialogInterface dialog) {
-                Log.i(TAG, "dialog cancel has been invoked");
-                if (mAuthThread != null) {
-                    mAuthThread.interrupt();
-                    finish();
+                Log.i(TAG, "user cancelling authentication");
+                if (mAuthTask != null) {
+                    mAuthTask.cancel(true);
                 }
             }
         });
+        // We save off the progress dialog in a field so that we can dismiss
+        // it later. We can't just call dismissDialog(0) because the system
+        // can lose track of our dialog if there's an orientation change.
+        mProgressDialog = dialog;
         return dialog;
     }
 
@@ -151,19 +157,14 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         }
         mPassword = mPasswordEdit.getText().toString();
         mUrl = mUrlEdit.getText().toString();
-     	// record auth settings
-   	 
         if (TextUtils.isEmpty(mUrl)||TextUtils.isEmpty(mUsername) || TextUtils.isEmpty(mPassword)) {
             mMessage.setText(getMessage());
         } else {
+            // Show a progress dialog, and kick off a background task to perform
+            // the user login attempt.
             showProgress();
-            // Start authenticating...
-            mAuthThread =
-                NetworkUtilities.attemptAuth(mUsername, mPassword, mUrl,mHandler,
-                    AuthenticatorActivity.this);
-
-           
-
+            mAuthTask = new UserLoginTask();
+            mAuthTask.execute();
         }
     }
 
@@ -171,10 +172,10 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
      * Called when response is received from the server for confirm credentials
      * request. See onAuthenticationResult(). Sets the
      * AccountAuthenticatorResult which is sent back to the caller.
-     * 
-     * @param the confirmCredentials result.
+     *
+     * @param result the confirmCredentials result.
      */
-    protected void finishConfirmCredentials(boolean result) {
+    private void finishConfirmCredentials(boolean result) {
         Log.i(TAG, "finishConfirmCredentials()");
         final Account account = new Account(mUsername, Constants.ACCOUNT_TYPE);
         mAccountManager.setPassword(account, mPassword);
@@ -186,65 +187,106 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         setResult(RESULT_OK, intent);
         finish();
     }
-
     /**
-     * 
      * Called when response is received from the server for authentication
      * request. See onAuthenticationResult(). Sets the
-     * AccountAuthenticatorResult which is sent back to the caller. Also sets
-     * the authToken in AccountManager for this account.
-     * 
-     * @param the confirmCredentials result.
+     * AccountAuthenticatorResult which is sent back to the caller. We store the
+     * authToken that's returned from the server as the 'password' for this
+     * account - so we're never storing the user's actual password locally.
+     *
+     * @param result the confirmCredentials result.
      */
+    private void finishLogin(String authToken) {
 
-    protected void finishLogin() {
-        Log.i(TAG, "finishLogin()");
+        Log.i(TAG, "finishLogin() ");
+        Log.i(TAG, mUsername);
+        Log.i(TAG, mUrl);
         final Account account = new Account(mUsername, Constants.ACCOUNT_TYPE);
-
         if (mRequestNewAccount) {
-        	Bundle url = new Bundle();
+            Bundle url = new Bundle();
         	url.putString("url", mUrl);
             mAccountManager.addAccountExplicitly(account, mPassword, url);
+            // looks like stored url in addaccountexplicitely has no effect !
+            mAccountManager.setUserData(account, "url", mUrl);
             // Set contacts sync for this account.
-            ContentResolver.setSyncAutomatically(account,
-                ContactsContract.AUTHORITY, true);
+            ContentResolver.setSyncAutomatically(account, ContactsContract.AUTHORITY, true);
         } else {
             mAccountManager.setPassword(account, mPassword);
         }
         final Intent intent = new Intent();
-        mAuthtoken = mPassword;
         intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, mUsername);
-        intent
-            .putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNT_TYPE);
-        if (mAuthtokenType != null
-            && mAuthtokenType.equals(Constants.AUTHTOKEN_TYPE)) {
-            intent.putExtra(AccountManager.KEY_AUTHTOKEN, mAuthtoken);
-        }
-        Log.i(TAG,"Authtoten "+mAuthtoken);
+        intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNT_TYPE);
         setAccountAuthenticatorResult(intent.getExtras());
         setResult(RESULT_OK, intent);
         finish();
     }
 
+//    /**
+//     * 
+//     * Called when response is received from the server for authentication
+//     * request. See onAuthenticationResult(). Sets the
+//     * AccountAuthenticatorResult which is sent back to the caller. Also sets
+//     * the authToken in AccountManager for this account.
+//     * 
+//     * @param the confirmCredentials result.
+//     */
+//
+//    protected void finishLogin() {
+//        Log.i(TAG, "finishLogin()");
+//        final Account account = new Account(mUsername, Constants.ACCOUNT_TYPE);
+//
+//        if (mRequestNewAccount) {
+//        	Bundle url = new Bundle();
+//        	url.putString("url", mUrl);
+//            mAccountManager.addAccountExplicitly(account, mPassword, url);
+//            // Set contacts sync for this account.
+//            ContentResolver.setSyncAutomatically(account,
+//                ContactsContract.AUTHORITY, true);
+//        } else {
+//            mAccountManager.setPassword(account, mPassword);
+//        }
+//        final Intent intent = new Intent();
+//        mAuthtoken = mPassword;
+//        intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, mUsername);
+//        intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNT_TYPE);
+//        if (mAuthtokenType != null
+//            && mAuthtokenType.equals(Constants.AUTHTOKEN_TYPE)) {
+//            intent.putExtra(AccountManager.KEY_AUTHTOKEN, mAuthtoken);
+//        }
+//        Log.i(TAG,"Authtoten "+mAuthtoken);
+//        setAccountAuthenticatorResult(intent.getExtras());
+//        setResult(RESULT_OK, intent);
+//        finish();
+//    }
+
     /**
      * Hides the progress UI for a lengthy operation.
      */
-    protected void hideProgress() {
-        dismissDialog(0);
-    }
+//    protected void hideProgress() {
+//        dismissDialog(0);
+//    }
 
     /**
      * Called when the authentication process completes (see attemptLogin()).
+     *
+     * @param authToken the authentication token returned by the server, or NULL if
+     *            authentication failed.
      */
-    public void onAuthenticationResult(boolean result) {
-        Log.i(TAG, "onAuthenticationResult(" + result + ")");
+    public void onAuthenticationResult(String authToken) {
+
+        boolean success = ((authToken != null) && (authToken.length() > 0));
+        Log.i(TAG, "onAuthenticationResult(" + success + ")");
+
+        // Our task is complete, so clear it out
+        mAuthTask = null;
+
         // Hide the progress dialog
         hideProgress();
-        if (result) {
+        if (success) {
             if (!mConfirmCredentials) {
-                finishLogin();
+                finishLogin(authToken);
             } else {
-                finishConfirmCredentials(true);
+                finishConfirmCredentials(success);
             }
             // store valid login values in preferences
             Log.i(TAG,"Storing values in preferences");
@@ -271,6 +313,15 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
             }
         }
     }
+    public void onAuthenticationCancel() {
+        Log.i(TAG, "onAuthenticationCancel()");
+
+        // Our task is complete, so clear it out
+        mAuthTask = null;
+
+        // Hide the progress dialog
+        hideProgress();
+    }
 
     /**
      * Returns the message to be displayed at the top of the login dialog box.
@@ -294,7 +345,52 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
     /**
      * Shows the progress UI for a lengthy operation.
      */
-    protected void showProgress() {
+    private void showProgress() {
         showDialog(0);
+    }
+
+    /**
+     * Hides the progress UI for a lengthy operation.
+     */
+    private void hideProgress() {
+        if (mProgressDialog != null) {
+            mProgressDialog.dismiss();
+            mProgressDialog = null;
+        }
+    }
+
+    /**
+     * Represents an asynchronous task used to authenticate a user against the
+     * SampleSync Service
+     */
+    public class UserLoginTask extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected String doInBackground(Void... params) {
+            // We do the actual work of authenticating the user
+            // in the NetworkUtilities class.
+            try {
+                return NetworkUtilities.authenticate(mUsername, mPassword,mUrl);
+            } catch (Exception ex) {
+                Log.e(TAG, "UserLoginTask.doInBackground: failed to authenticate");
+                Log.i(TAG, ex.toString());
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(final String authToken) {
+            // On a successful authentication, call back into the Activity to
+            // communicate the authToken (or null for an error).
+            onAuthenticationResult(authToken);
+        }
+
+        @Override
+        protected void onCancelled() {
+            // If the action was canceled (by the user clicking the cancel
+            // button in the progress dialog), then call back into the
+            // activity to let it know.
+            onAuthenticationCancel();
+        }
     }
 }
