@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<string-array name="SyncValue">
+    <item>"2 mn"</item>
+    <item>"10 mn"</item>
+    <item>"1h"</item>
+    <item>"2h"</item>
+    <item>"4h"</item>
+    <item>"8h"</item>
+    <item>"16h"</item>
+    <item>"24h"</item>
+    
+</string-array>
+<string-array name="SyncData">
+    <item >120</item>
+    <item >600</item>
+    <item >3600</item>
+    <item >7200</item>
+    <item >14400</item>
+    <item >28800</item>
+    <item >57600</item>
+    <item >86400</item>
+</string-array>
+</resources>

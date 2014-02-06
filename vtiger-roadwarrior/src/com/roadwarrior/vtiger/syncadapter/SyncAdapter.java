@@ -72,12 +72,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         String authtoken = null;
 
          try {
-        	 Log.i(TAG,"----- SYNCING onPerformSync----");
+        	 Log.d(TAG,"----- SYNCING onPerformSync  ----");
         	 // see if we already have a sync-state attached to this account. By handing
             // This value to the server, we can just get the contacts that have
             // been updated on the server-side since our last sync-up
             long lastSyncMarker = getServerSyncMarker(account);
-            
+            Log.d(TAG,String.valueOf(lastSyncMarker));
             // By default, contacts from a 3rd party provider are hidden in the contacts
             // list. So let's set the flag that causes them to be visible, so that users
             // can actually see these contacts.

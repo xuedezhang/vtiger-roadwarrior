@@ -19,7 +19,6 @@ import com.roadwarrior.vtiger.Constants;
 import com.roadwarrior.vtiger.R;
 import com.roadwarrior.vtiger.client.NetworkUtilities;
 
-
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;
@@ -27,15 +26,17 @@ import android.accounts.AccountManager;
 import android.accounts.NetworkErrorException;
 import android.app.Notification;
 import android.app.NotificationManager;
-
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
-
+import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 import android.app.Notification;
 import android.app.Notification.Builder;
 import android.app.NotificationManager;
-
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -43,7 +44,7 @@ import android.util.Log;
  * This class is an implementation of AbstractAccountAuthenticator for
  * authenticating accounts in the com.roadwarrior.vtiger domain.
  */
-class VtigerAuthenticator extends AbstractAccountAuthenticator {
+public class VtigerAuthenticator extends AbstractAccountAuthenticator {
 	 /** The tag used to log to adb console. **/
     private static final String TAG = "VTiger.Authenticator";
 
@@ -163,4 +164,23 @@ class VtigerAuthenticator extends AbstractAccountAuthenticator {
         Log.v(TAG, "updateCredentials()");
         return null;
     }
+    
+	public static void resyncAccount(Context context) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		Log.i(TAG,"resyncAccount");
+		Log.i(TAG,"new period " + prefs.getString("sync_period", "100"));
+		long sync_period = Long.parseLong(prefs.getString("sync_period", "100"));
+		AccountManager am = AccountManager.get(context);
+		Account[] accounts = am.getAccountsByType(Constants.ACCOUNT_TYPE);
+		if(ContentResolver.getSyncAutomatically(accounts[0], ContactsContract.AUTHORITY)) {
+			Log.i(TAG,"turning sync off / on");
+
+			//Try turning it off and on again
+	        ContentResolver.setSyncAutomatically(accounts[0], ContactsContract.AUTHORITY, false);
+	        ContentResolver.setSyncAutomatically(accounts[0], ContactsContract.AUTHORITY, true);
+	        ContentResolver.removePeriodicSync(accounts[0], ContactsContract.AUTHORITY, new Bundle());
+	        ContentResolver.addPeriodicSync(accounts[0], ContactsContract.AUTHORITY, new Bundle(), sync_period);
+		}
+	}
+	
 }

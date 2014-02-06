@@ -190,6 +190,36 @@ public class User {
     	try {
         	Log.i(TAG,"Valueof");
         	Log.i(TAG,user.toString());
+        	
+        	// LEAD RESULTS looks like:
+        	/*{"lead_no":"LEA2",
+        	 "phone":"",
+        	 "state":"",
+        	 "assigned_user_id":"19x1",
+        	 "leadsource":"--None--",
+        	 "designation":"",
+        	 "lastname":"jkgk",
+        	 "modifiedby":"19x1",
+        	 "city":"","lane":"",
+        	 "id":"2x16",
+        	 "description":"",
+        	 "noofemployees":"0",
+        	 "industry":"--None--",
+        	 "fax":"",
+        	 "website":"",
+        	 "annualrevenue":"0",
+        	 "code":"",
+        	 "firstname":"new leadf",
+        	 "country":"","email":"",
+        	 "leadstatus":"--None--",
+        	 "salutationtype":"Mrs.",
+        	 "createdtime":"2014-02-06 18:41:41",
+        	 "secondaryemail":"",
+        	 "company":"companyname",
+        	 "pobox":"",
+        	 "modifiedtime":"2014-02-06 18:43:34",
+        	 "rating":"--None--",
+        	 "mobile":""} */
             final String firstName = user.has("firstname") ? user.getString("firstname") : null;
             final String lastName = user.has("lastname") ? user.getString("lastname") : null;
             final String cellPhone = user.has("mobile") ? user.getString("mobile") : null;
@@ -200,7 +230,12 @@ public class User {
             final String email = user.has("email") ? user.getString("email") : null;
             final String website = user.has("website") ? user.getString("website") : null;
              //  ACCOUNTS
-            final String organisation = user.has("accountname") ? user.getString("accountname") : null;
+            String organisation = user.has("accountname") ? user.getString("accountname") : null;
+            if (organisation == null)
+            {  // lead organisation
+            	if (user.has("company"))
+            	  organisation = user.getString("company");
+            }
             final String Phone = user.has("phone") ? user.getString("phone") : null;
             // contacts
             if (user.has("mailingstreet"))
@@ -286,13 +321,23 @@ public class User {
                     deleted, userId);
 
             }
-            
-            
+            // == this is a lead  == 
+            if (user.has("lead_no"))
+            {
+            }
             final String lead_no = user.has("lead_no") ? user.getString("lead_no") : null;
             if (lead_no != null){
+
             Log.i("User","lead "+ lead_no);
             Log.i("User", lead_no.substring(3));
-            userId = Integer.parseInt(lead_no.substring(3)) | 0x80000;
+        	if (user.has("city")) 
+        		city = user.getString("city");
+        	if (user.has("lane")) 
+        		address = user.getString("lane");
+        	if (user.has("code")) 
+        		postcode = user.getString("code");
+
+        	userId = Integer.parseInt(lead_no.substring(3)) | 0x80000;
             return new User("serName", firstName, lastName, cellPhone,
                     officePhone, Phone, email,website, organisation,
                     address,city,region,pobox,postcode,country,

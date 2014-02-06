@@ -12,6 +12,11 @@
                 android:defaultValue="@string/http_label"
                 android:title="@string/vtiger_url" android:summary="@string/http_label" />
 
+        <ListPreference 
+	    android:key="sync_period"
+ 	   	android:title="@string/sync_period_label"
+   		android:entries="@array/SyncValue"
+    android:entryValues="@array/SyncData"/>
         
 </PreferenceScreen>
 

@@ -166,90 +166,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         }
     }
 
-//    
-//    public void submit(View view) {
-//
-////        final String userName = ((TextView) findViewById(R.id.accountName)).getText().toString();
-////        final String userPass = ((TextView) findViewById(R.id.accountPassword)).getText().toString();
-//
-//        mUsername = mUsernameEdit.getText().toString();
-//        mPassword = mPasswordEdit.getText().toString();
-//        mUrl = mUrlEdit.getText().toString();
-//        if (TextUtils.isEmpty(mUrl)||TextUtils.isEmpty(mUsername) || TextUtils.isEmpty(mPassword)) {
-//            mMessage.setText(getMessage());
-//        } else {
-//        	showProgress();	
-//        	final String accountType = getIntent().getStringExtra(ARG_ACCOUNT_TYPE);
-//
-//        	new AsyncTask<String, Void, Intent>() {
-//
-//            @Override
-//            protected Intent doInBackground(String... params) {
-//
-//                Log.d("udinic", TAG + "> Started authenticating");
-//
-//                Bundle data = new Bundle();
-//                try {
-//
-//                    String authtoken;
-//                    authtoken = NetworkUtilities.authenticate(mUsername, mPassword,mUrl);
-//                    if (authtoken != null){
-//	                    data.putString(AccountManager.KEY_ACCOUNT_NAME, mUsername);
-//	                    data.putString(AccountManager.KEY_ACCOUNT_TYPE, accountType);
-//	                    data.putString(AccountManager.KEY_AUTHTOKEN, authtoken);
-//	
-//	                    // We keep the user's object id as an extra data on the account.
-//	                    // It's used later for determine ACL for the data we send to the Parse.com service
-//	                    Bundle userData = new Bundle();
-//	                    userData.putString(USERDATA_USER_OBJ_ID, user.getObjectId());
-//	                    data.putBundle(AccountManager.KEY_USERDATA, userData);
-//
-//                    data.putString(PARAM_USER_PASS, userPass);
-//                    }
-//                    else {
-//                        data.putString(KEY_ERROR_MESSAGE,"can not authenticate");
-//                    }
-//                } catch (Exception e) {
-//                	  Log.e(TAG, "UserLoginTask.doInBackground: failed to authenticate");
-//                      Log.i(TAG, e.toString());
-//                      data.putString(KEY_ERROR_MESSAGE, e.getMessage());
-//                }
-//
-//                final Intent res = new Intent();
-//                res.putExtras(data);
-//                return res;
-//            }
-//
-//            @Override
-//            protected void onPostExecute(Intent intent) {
-//                if (intent.hasExtra(KEY_ERROR_MESSAGE)) {
-//                    Toast.makeText(getBaseContext(), intent.getStringExtra(KEY_ERROR_MESSAGE), Toast.LENGTH_SHORT).show();
-//                } else {
-//                    finishLogin(intent);
-//                }
-//            }
-//        }.execute();
-//        }
-//    }
-//    /**
-//     * Called when response is received from the server for confirm credentials
-//     * request. See onAuthenticationResult(). Sets the
-//     * AccountAuthenticatorResult which is sent back to the caller.
-//     *
-//     * @param result the confirmCredentials result.
-//     */
-//    private void finishConfirmCredentials(boolean result) {
-//        Log.i(TAG, "finishConfirmCredentials()");
-//        final Account account = new Account(mUsername, Constants.ACCOUNT_TYPE);
-//        mAccountManager.setPassword(account, mPassword);
-//        mAccountManager.setUserData(account, "url",mUrl);
-//        
-//        final Intent intent = new Intent();
-//        intent.putExtra(AccountManager.KEY_BOOLEAN_RESULT, result);
-//        setAccountAuthenticatorResult(intent.getExtras());
-//        setResult(RESULT_OK, intent);
-//        finish();
-//    }
+
     /**
      * Called when response is received from the server for authentication
      * request. See onAuthenticationResult(). Sets the
@@ -273,6 +190,8 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
             mAccountManager.setUserData(account, "url", mUrl);
             // Set contacts sync for this account.
             ContentResolver.setSyncAutomatically(account, ContactsContract.AUTHORITY, true);
+            // sync every hour
+            ContentResolver.addPeriodicSync(account, ContactsContract.AUTHORITY, new Bundle(), 3600);
         } else {
             mAccountManager.setPassword(account, mPassword);
         }
@@ -282,34 +201,15 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         setAccountAuthenticatorResult(intent.getExtras());
         setResult(RESULT_OK, intent);
         finish();
+        Log.i(TAG,"ask for an immediate sync");
+        
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        ContentResolver.requestSync(account, ContactsContract.AUTHORITY, bundle);
+
     }
 
-//    
-//    private void finishLogin(Intent intent) {
-//        Log.d("udinic", TAG + "> finishLogin");
-//
-//        String accountName = intent.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-//        String accountPassword = intent.getStringExtra(PARAM_USER_PASS);
-//        final Account account = new Account(accountName, intent.getStringExtra(AccountManager.KEY_ACCOUNT_TYPE));
-//
-//        if (getIntent().getBooleanExtra(ARG_IS_ADDING_NEW_ACCOUNT, false)) {
-//            Log.d("udinic", TAG + "> finishLogin > addAccountExplicitly");
-//            String authtoken = intent.getStringExtra(AccountManager.KEY_AUTHTOKEN);
-//            String authtokenType = mAuthTokenType;
-//
-//            // Creating the account on the device and setting the auth token we got
-//            // (Not setting the auth token will cause another call to the server to authenticate the user)
-//            mAccountManager.addAccountExplicitly(account, accountPassword, intent.getBundleExtra(AccountManager.KEY_USERDATA));
-//            mAccountManager.setAuthToken(account, authtokenType, authtoken);
-//        } else {
-//            Log.d("udinic", TAG + "> finishLogin > setPassword");
-//            mAccountManager.setPassword(account, accountPassword);
-//        }
-//
-//        setAccountAuthenticatorResult(intent.getExtras());
-//        setResult(RESULT_OK, intent);
-//        finish();
-//    }
     /**
      * Called when the authentication process completes (see attemptLogin()).
      *
@@ -334,6 +234,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
             editor.putString("vtiger_url",mUrl);
             editor.putString("username",mUsername);
             editor.putString("password",mPassword);
+            editor.putString("sync_period","3600");
             editor.commit();
 //            if (!mConfirmCredentials) {
             finishLogin(authToken);

@@ -8,7 +8,7 @@
     <PreferenceScreen
         android:key="account_settings"
         android:title="VTiger Settings"
-        android:summary="Sync account settings">
+        android:summary="Sync period, account settings">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.roadwarrior.vtiger"

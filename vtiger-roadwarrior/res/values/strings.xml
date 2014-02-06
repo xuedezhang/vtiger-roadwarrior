@@ -97,4 +97,7 @@
     <string name="http_label">http://192.168.1.23:81/vtigercrm540</string>
 	<string name="login_label">admin</string>
     <string name="accesskey_label"> tSDSEgCe1tLnM6cz</string>
+    
+    <string name="sync_period_label">Sync period</string>
+    
 </resources>

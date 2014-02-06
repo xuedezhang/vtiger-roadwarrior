@@ -295,7 +295,10 @@ final public class NetworkUtilities {
         ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
         params.add(new BasicNameValuePair(PARAM_OPERATION, "sync"));
         params.add(new BasicNameValuePair(PARAM_SESSIONNAME, sessionName));
-        params.add(new BasicNameValuePair("modifiedTime","878925701" )); // il y a 14 ans.... 
+        if (serverSyncState == 0)
+        	params.add(new BasicNameValuePair("modifiedTime","878925701" )); // il y a 14 ans.... 
+        else
+        	params.add(new BasicNameValuePair("modifiedTime",String.valueOf(serverSyncState )));
         params.add(new BasicNameValuePair("elementType",type_contact));  // "Accounts,Leads , Contacts... 
         Log.d(TAG,"fetchFriendUpdates");
         //   params.add(new BasicNameValuePair(PARAM_QUERY, "select firstname,lastname,mobile,email,homephone,phone from Contacts;"));
