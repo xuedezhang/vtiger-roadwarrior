@@ -347,11 +347,13 @@ final public class NetworkUtilities {
         	// </Hack>
         	Log.i(TAG,"--response end--");
         	JSONObject result=new JSONObject(response);
-            Log.i(TAG,result.getString("result"));
+        	
+        	
             String success = result.getString("success");
             Log.i(TAG,"success is"+success);
             if (success == "true")
             {
+            Log.i(TAG,result.getString("result"));
             final JSONObject data = new JSONObject(result.getString("result"));
             final JSONArray friends = new JSONArray(data.getString("updated"));
             
