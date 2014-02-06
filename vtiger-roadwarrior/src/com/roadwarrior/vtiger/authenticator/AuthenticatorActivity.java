@@ -27,7 +27,6 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
@@ -67,7 +66,6 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
     private Boolean mConfirmCredentials = false;
 
     /** for posting authentication attempts back to UI thread */
-    private final Handler mHandler = new Handler();
     private TextView mMessage;
     private String mPassword;
     private EditText mPasswordEdit;
@@ -92,7 +90,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         Log.i(TAG, "loading data from Intent");
         final Intent intent = getIntent();
         mUsername = intent.getStringExtra(PARAM_USERNAME);
-        mRequestNewAccount = mUsername == null;
+        mRequestNewAccount = (mUsername == null);
         mConfirmCredentials =
             intent.getBooleanExtra(PARAM_CONFIRMCREDENTIALS, false);
 
@@ -152,9 +150,8 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
      * @param view The Submit button for which this method is invoked
      */
     public void handleLogin(View view) {
-        if (mRequestNewAccount) {
-            mUsername = mUsernameEdit.getText().toString();
-        }
+        
+    	mUsername = mUsernameEdit.getText().toString();
         mPassword = mPasswordEdit.getText().toString();
         mUrl = mUrlEdit.getText().toString();
         if (TextUtils.isEmpty(mUrl)||TextUtils.isEmpty(mUsername) || TextUtils.isEmpty(mPassword)) {
@@ -220,51 +217,6 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         setResult(RESULT_OK, intent);
         finish();
     }
-
-//    /**
-//     * 
-//     * Called when response is received from the server for authentication
-//     * request. See onAuthenticationResult(). Sets the
-//     * AccountAuthenticatorResult which is sent back to the caller. Also sets
-//     * the authToken in AccountManager for this account.
-//     * 
-//     * @param the confirmCredentials result.
-//     */
-//
-//    protected void finishLogin() {
-//        Log.i(TAG, "finishLogin()");
-//        final Account account = new Account(mUsername, Constants.ACCOUNT_TYPE);
-//
-//        if (mRequestNewAccount) {
-//        	Bundle url = new Bundle();
-//        	url.putString("url", mUrl);
-//            mAccountManager.addAccountExplicitly(account, mPassword, url);
-//            // Set contacts sync for this account.
-//            ContentResolver.setSyncAutomatically(account,
-//                ContactsContract.AUTHORITY, true);
-//        } else {
-//            mAccountManager.setPassword(account, mPassword);
-//        }
-//        final Intent intent = new Intent();
-//        mAuthtoken = mPassword;
-//        intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, mUsername);
-//        intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNT_TYPE);
-//        if (mAuthtokenType != null
-//            && mAuthtokenType.equals(Constants.AUTHTOKEN_TYPE)) {
-//            intent.putExtra(AccountManager.KEY_AUTHTOKEN, mAuthtoken);
-//        }
-//        Log.i(TAG,"Authtoten "+mAuthtoken);
-//        setAccountAuthenticatorResult(intent.getExtras());
-//        setResult(RESULT_OK, intent);
-//        finish();
-//    }
-
-    /**
-     * Hides the progress UI for a lengthy operation.
-     */
-//    protected void hideProgress() {
-//        dismissDialog(0);
-//    }
 
     /**
      * Called when the authentication process completes (see attemptLogin()).
@@ -370,7 +322,10 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
             // We do the actual work of authenticating the user
             // in the NetworkUtilities class.
             try {
-                return NetworkUtilities.authenticate(mUsername, mPassword,mUrl);
+            	String authtoken;
+                authtoken = NetworkUtilities.authenticate(mUsername, mPassword,mUrl);
+                return authtoken;
+                
             } catch (Exception ex) {
                 Log.e(TAG, "UserLoginTask.doInBackground: failed to authenticate");
                 Log.i(TAG, ex.toString());
