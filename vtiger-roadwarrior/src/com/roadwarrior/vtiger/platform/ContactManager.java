@@ -55,7 +55,7 @@ public class ContactManager {
      * Custom IM protocol used when storing status messages.
      */
     public static final String CUSTOM_IM_PROTOCOL = "SampleSyncAdapter";
-    private static final String TAG = "ContactManager";
+    private static final String TAG = "VTiger.ContactManager";
     public static long groupLeads = 0;
     public static long groupContacts = 0;
     public static long groupAccounts = 0;
@@ -105,11 +105,10 @@ public class ContactManager {
      * @param account The username for the account
      * @param users The list of users
      */
-    public static synchronized long syncContacts(Context context,
-        String account, List<User> users, long groupId, long lastSyncMarker) {
+    public static void syncContacts(Context context,
+        String account, List<User> users, long groupId) {
         long userId;
         long rawContactId = 0;
-        long currentSyncMarker = lastSyncMarker;
         //FIXME:calendar
         if (0==1)
         {
@@ -135,29 +134,28 @@ public class ContactManager {
 //                // we're safe here to do any further work
 //           }
 //     }
-    	String calId = null;
-		ContentResolver contentResolver = context.getContentResolver();
-		Log.i("hgg","readcal");
-
-		// Fetch a list of all calendars synced with the device, their display names and whether the
-		// user has them selected for display.
-		final Cursor cursor = contentResolver.query(Uri.parse("content://com.android.calendar/calendars"),
-				(new String[] { "_id", "displayName", "selected" }), null, null, null);
-		// For a full list of available columns see http://tinyurl.com/yfbg76w
-		HashSet<String> calendarIds = new HashSet<String>();
-		
-		while (cursor.moveToNext()) {
-
-			final String _id = cursor.getString(0);
-			final String displayName = cursor.getString(1);
-			final Boolean selected = !cursor.getString(2).equals("0");
-			
-			Log.i("hgg","Id: " + _id + " Display Name: " + displayName + " Selected: " + selected);
-			calendarIds.add(_id);
-			calId = _id;
-			
-			
-		}
+//    	String calId = null;
+//		ContentResolver contentResolver = context.getContentResolver();
+//
+//		// Fetch a list of all calendars synced with the device, their display names and whether the
+//		// user has them selected for display.
+//		final Cursor cursor = contentResolver.query(Uri.parse("content://com.android.calendar/calendars"),
+//				(new String[] { "_id", "displayName", "selected" }), null, null, null);
+//		// For a full list of available columns see http://tinyurl.com/yfbg76w
+//		HashSet<String> calendarIds = new HashSet<String>();
+//		
+//		while (cursor.moveToNext()) {
+//
+//			final String _id = cursor.getString(0);
+//			final String displayName = cursor.getString(1);
+//			final Boolean selected = !cursor.getString(2).equals("0");
+//			
+//			Log.i("hgg","Id: " + _id + " Display Name: " + displayName + " Selected: " + selected);
+//			calendarIds.add(_id);
+//			calId = _id;
+//			
+//			
+//		}
 //		Calendar cal = Calendar.getInstance();              
 //		Intent intent = new Intent(Intent.ACTION_EDIT);
 //		intent.setType("vnd.android.cursor.item/event");
@@ -167,24 +165,24 @@ public class ContactManager {
 //		intent.putExtra("endTime", cal.getTimeInMillis()+60*60*1000);
 //		intent.putExtra("title", "A Test Event from android app");
 //		startActivity(intent);
-
-		// http://www.developer.com/ws/article.php/3850276/Working-with-the-Android-Calendar.htm
-		//http://www.andreabaccega.com/blog/2010/08/09/add-events-on-google-calendar-on-android-froyo/
-		// add an event in calendar
-		ContentValues event = new ContentValues();
-		event.put("calendar_id", "2");
-		event.put("title", "Event Title");
-		event.put("description", "Event Desc");
-		event.put("eventLocation", "Event Location");
-		long startTime = new Date().getTime();;
-		long endTime = startTime+DateUtils.WEEK_IN_MILLIS;
-		event.put("dtstart", startTime);
-		event.put("dtend", endTime);
-		event.put("allDay", 1);   // 0 for false, 1 for true
-		//event.put("hasAlarm", 0);   // 0 for false, 1 for true
-
-		Uri eventsUri = Uri.parse("content://com.android.calendar/calendar/events");
-		  Uri url = contentResolver.insert(eventsUri, event);
+//
+//		// http://www.developer.com/ws/article.php/3850276/Working-with-the-Android-Calendar.htm
+//		//http://www.andreabaccega.com/blog/2010/08/09/add-events-on-google-calendar-on-android-froyo/
+//		// add an event in calendar
+//		ContentValues event = new ContentValues();
+//		event.put("calendar_id", "2");
+//		event.put("title", "Event Title");
+//		event.put("description", "Event Desc");
+//		event.put("eventLocation", "Event Location");
+//		long startTime = new Date().getTime();;
+//		long endTime = startTime+DateUtils.WEEK_IN_MILLIS;
+//		event.put("dtstart", startTime);
+//		event.put("dtend", endTime);
+//		event.put("allDay", 1);   // 0 for false, 1 for true
+//		//event.put("hasAlarm", 0);   // 0 for false, 1 for true
+//
+//		Uri eventsUri = Uri.parse("content://com.android.calendar/calendar/events");
+//		  Uri url = contentResolver.insert(eventsUri, event);
 //		// For each calendar, display all the events from the previous week to the end of next week.		
 //		for (String id : calendarIds) {
 //			Uri.Builder builder = Uri.parse("content://calendar/instances/when").buildUpon();
@@ -252,7 +250,6 @@ public class ContactManager {
         }
         batchOperation.execute();
 
-        return currentSyncMarker;
     }
 
     /**

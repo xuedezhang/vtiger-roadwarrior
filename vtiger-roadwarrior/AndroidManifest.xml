@@ -16,51 +16,46 @@
  * limitations under the License.
  */
 -->
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.roadwarrior.vtiger"
     android:versionCode="1"
-    android:versionName="1.0">
-    <uses-permission
-        android:name="android.permission.GET_ACCOUNTS" />
+    android:versionName="1.0" >
+
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission
-        android:name="android.permission.USE_CREDENTIALS" />
-    <uses-permission android:name="android.permission.WRITE_CALENDAR"></uses-permission>
-	<uses-permission android:name="android.permission.READ_CALENDAR"></uses-permission>
-    <uses-permission
-        android:name="android.permission.MANAGE_ACCOUNTS" />
-    <uses-permission
-        android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
-    <uses-permission
-        android:name="android.permission.INTERNET" />
-    <uses-permission
-        android:name="android.permission.WRITE_SETTINGS" />
-    <uses-permission
-        android:name="android.permission.WRITE_SECURE_SETTINGS" />
-    <uses-permission
-        android:name="android.permission.READ_CONTACTS" />
-    <uses-permission
-        android:name="android.permission.WRITE_CONTACTS" />
-    <uses-permission
-        android:name="android.permission.READ_SYNC_STATS" />
-    <uses-permission
-        android:name="android.permission.READ_SYNC_SETTINGS" />
-    <uses-permission
-        android:name="android.permission.WRITE_SYNC_SETTINGS" />
-    <uses-sdk android:minSdkVersion="10"/>
-    
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" >
+    </uses-permission>
+    <uses-permission android:name="android.permission.READ_CALENDAR" >
+    </uses-permission>
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!-- <uses-permission -->
+    <!-- android:name="android.permission.WRITE_SECURE_SETTINGS" /> -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_SYNC_STATS" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+
+    <uses-sdk
+        android:minSdkVersion="15" />
+<!--        android:targetSdkVersion="15" -->
+
     <application
         android:icon="@drawable/icon"
-        android:label="@string/label" android:debuggable="true">
+        android:label="@string/label"
+        android:debuggable="false" >
         <!-- The authenticator service -->
         <service
-            android:name=".authenticator.AuthenticationService"
-            android:exported="true">
+            android:name="com.roadwarrior.vtiger.authenticator.AuthenticationService"
+            android:exported="true" >
             <intent-filter>
-                <action
-                    android:name="android.accounts.AccountAuthenticator" />
+                <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
+
             <meta-data
                 android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/authenticator" />
@@ -69,9 +64,9 @@
             android:name="com.roadwarrior.vtiger.syncadapter.SyncService"
             android:exported="true" >
             <intent-filter>
-                <action
-                    android:name="android.content.SyncAdapter" />
+                <action android:name="android.content.SyncAdapter" />
             </intent-filter>
+
             <meta-data
                 android:name="android.content.SyncAdapter"
                 android:resource="@xml/syncadapter" />
@@ -79,28 +74,44 @@
                 android:name="android.provider.CONTACTS_STRUCTURE"
                 android:resource="@xml/contacts" />
         </service>
+
         <activity
-            android:name=".authenticator.AuthenticatorActivity"
-            android:label="@string/ui_activity_title"
-            android:theme="@android:style/Theme.Dialog"
+            android:name="com.roadwarrior.vtiger.authenticator.AuthenticatorActivity"
             android:excludeFromRecents="true"
-            >
+            android:label="@string/ui_activity_title"
+            android:theme="@android:style/Theme.Dialog" >
+
             <!--
                 No intent-filter here! This activity is only ever launched by
                 someone who explicitly knows the class name
             -->
         </activity>
-		<!-- prefs -->
-		 <activity
-	   android:label="Account preferences"
- 	 	 android:name=".AccountPreferences">
-   <intent-filter>
-      <action
-         android:name="my.account.preference.MAIN" />
-      <category
-         android:name="android.intent.category.DEFAULT" />
-    </intent-filter>
- </activity>
+        <!-- prefs -->
+        <activity
+            android:name="com.roadwarrior.vtiger.AccountPreferences"
+            android:label="Account preferences" >
+            <intent-filter>
+                <action android:name="my.account.preference.MAIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+        <activity
+            android:name="com.roadwarrior.vtiger.receiver.Diagnoser"
+            android:label="@string/ui_diagnoser_title"
+            android:theme="@android:style/Theme.Dialog" >
+        </activity>
+        <!-- diagnosis view -->
+        <receiver android:name="com.roadwarrior.vtiger.receiver.DiagnoserReceiver" >
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SECRET_CODE" />
+
+                <data
+                    android:host="111222"
+                    android:scheme="android_secret_code" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

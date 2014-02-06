@@ -33,7 +33,7 @@ import java.util.ArrayList;
  */
 final public class BatchOperation {
 
-    private final String TAG = "BatchOperation";
+    private final String TAG = "VTiger.BatchOperation";
 
     private final ContentResolver mResolver;
     // List for storing the batch mOperations

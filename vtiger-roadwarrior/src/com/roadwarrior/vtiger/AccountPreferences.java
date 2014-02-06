@@ -15,7 +15,7 @@ import com.roadwarrior.vtiger.R;
 
 public class AccountPreferences extends PreferenceActivity implements OnSharedPreferenceChangeListener {
 
-public static final String TAG = "AccountPreferences";
+public static final String TAG = "VTiger.AccountPreferences";
 private boolean shouldForceSync = false;
 private Preference mUsername;
 private Preference mPassword;

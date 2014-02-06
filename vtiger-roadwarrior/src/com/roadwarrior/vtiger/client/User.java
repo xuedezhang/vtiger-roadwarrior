@@ -24,7 +24,7 @@ import org.json.JSONObject;
  * Represents a  SyncAdapter user
  */
 public class User {
-    private final static String TAG = "User";
+    private final static String TAG = "VTiger.User";
 
 	private final String mUserName;
     private final String mFirstName;

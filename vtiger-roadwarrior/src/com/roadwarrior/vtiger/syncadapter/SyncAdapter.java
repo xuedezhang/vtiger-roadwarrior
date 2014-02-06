@@ -23,8 +23,10 @@ import android.accounts.OperationCanceledException;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.SyncResult;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -39,15 +41,17 @@ import org.apache.http.auth.AuthenticationException;
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * SyncAdapter implementation for syncing sample SyncAdapter contacts to the
  * platform ContactOperations provider.
  */
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
-    private static final String TAG = "SyncAdapter";
+    private static final String TAG = "VTiger.SyncAdapter";
     private static final String SYNC_MARKER_KEY = "com.roadwarrior.vtiger.marker";
     private static final boolean NOTIFY_AUTH_FAILURE = true;
 
@@ -88,7 +92,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
              authtoken =
                 mAccountManager.blockingGetAuthToken(account,
                     Constants.AUTHTOKEN_TYPE, true /* notifyAuthFailure */);
-             
+             if (authtoken != null)
+             {
+             Log.d(TAG,"authtoken obtained");
              // Make sure that the Vtiger group exists
              final long groupId = ContactManager.ensureSampleGroupExists(mContext, account,"VTiger Contacts");
              final long groupId1 = ContactManager.ensureSampleGroupExists(mContext, account,"VTiger Leads");
@@ -96,33 +102,64 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
              ContactManager.groupLeads = groupId1;
              ContactManager.groupAccounts = groupId2;
              ContactManager.groupContacts = groupId;
+             String url = mAccountManager.getUserData(account, "url");
+             Log.d(TAG,"URL is \nURL ");
+             Log.d(TAG,url);
+             
+             
              // fetch updates from the sample service over the cloud
              users =
-                NetworkUtilities.fetchFriendUpdates(account, authtoken,
+                NetworkUtilities.fetchFriendUpdates(account, url,authtoken,
                     lastSyncMarker,"Contacts");
+             if (! NetworkUtilities.getLastOperationStatus())
+            	 {
+            	 mAccountManager.invalidateAuthToken(Constants.ACCOUNT_TYPE, authtoken);
+             	 return;
+            	 }
+             // update platform contacts.
+             Log.d(TAG, "Calling contactManager's sync contacts");
+             ContactManager.syncContacts(mContext, account.name, users,groupId);
+             
+             
              users_accounts =
-                 NetworkUtilities.fetchFriendUpdates(account, authtoken,
+                 NetworkUtilities.fetchFriendUpdates(account, url,authtoken,
                      lastSyncMarker,"Accounts");
-             users_leads =
-                 NetworkUtilities.fetchFriendUpdates(account, authtoken,
-                     lastSyncMarker,"Leads");
+             if (! NetworkUtilities.getLastOperationStatus())
+        	 {
+        	 mAccountManager.invalidateAuthToken(Constants.ACCOUNT_TYPE, authtoken);
+         	 return;
+        	 }
+             ContactManager.syncContacts(mContext, account.name, users_accounts,groupId2);
 
+             
+             users_leads =
+                 NetworkUtilities.fetchFriendUpdates(account, url,authtoken,
+                     lastSyncMarker,"Leads");
+             if (! NetworkUtilities.getLastOperationStatus())
+        	 {
+        	 mAccountManager.invalidateAuthToken(Constants.ACCOUNT_TYPE, authtoken);
+         	 return;
+        	 }
  
-            // update platform contacts.
-            Log.d(TAG, "Calling contactManager's sync contacts");
-            long newSyncState = ContactManager.syncContacts(mContext, account.name, users,groupId,lastSyncMarker);
-            // FIXME: gestion newSyncState            
-            ContactManager.syncContacts(mContext, account.name, users_leads,groupId1,lastSyncMarker);
-            ContactManager.syncContacts(mContext, account.name, users_accounts,groupId2,lastSyncMarker);
+
+            ContactManager.syncContacts(mContext, account.name, users_leads,groupId1);
             // fetch and update status messages for all the synced users.
 //            statuses = NetworkUtilities.fetchFriendStatuses(account, authtoken);
 //
 //
 //            ContactManager.insertStatuses(mContext, account.name, statuses);
-
-		 // Save off the new sync marker. On our next sync, we only want to receive
+            
+            // Save off the new sync marker. On our next sync, we only want to receive
             // contacts that have changed since this sync...
-            setServerSyncMarker(account, newSyncState);
+            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+            long secondsSinceEpoch = calendar.getTimeInMillis() / 1000L;
+            
+            setServerSyncMarker(account, secondsSinceEpoch);
+            }
+             else 
+             {
+            	 Log.d(TAG,"authtoken not obtained");
+             }
 
         } catch (final AuthenticatorException e) {
             syncResult.stats.numParseExceptions++;

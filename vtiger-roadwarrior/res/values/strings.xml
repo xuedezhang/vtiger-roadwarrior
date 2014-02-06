@@ -40,6 +40,9 @@
     <string
         name="notification_login_error">Touch to sign into your Sample SyncAdapter account.</string>
 
+       <!-- Title string for diagnoser activity-->
+    <string
+        name="ui_diagnoser_title">Vtiger roadwarrior debug output </string>
     <!-- Title string for Login activity-->
     <string
         name="ui_activity_title">Sign-in</string>
@@ -94,5 +97,4 @@
     <string name="http_label">http://192.168.1.23:81/vtigercrm540</string>
 	<string name="login_label">admin</string>
     <string name="accesskey_label"> tSDSEgCe1tLnM6cz</string>
-    
 </resources>

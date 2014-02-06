@@ -29,9 +29,6 @@ public class SyncService extends Service {
     private static final Object sSyncAdapterLock = new Object();
     private static SyncAdapter sSyncAdapter = null;
 
-    /*
-     * {@inheritDoc}
-     */
     @Override
     public void onCreate() {
         synchronized (sSyncAdapterLock) {
@@ -41,9 +38,6 @@ public class SyncService extends Service {
         }
     }
 
-    /*
-     * {@inheritDoc}
-     */
     @Override
     public IBinder onBind(Intent intent) {
         return sSyncAdapter.getSyncAdapterBinder();

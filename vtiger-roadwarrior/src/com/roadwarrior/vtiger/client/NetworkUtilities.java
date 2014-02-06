@@ -46,10 +46,20 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -63,7 +73,7 @@ import java.util.TimeZone;
  */
 final public class NetworkUtilities {
     /** The tag used to log to adb console. */
-    private static final String TAG = "NetworkUtilities";
+    private static final String TAG = "VTiger.NetworkUtilities";
     public static final String PARAM_USERNAME = "username";
     public static final String PARAM_OPERATION = "operation";
     public static final String PARAM_SESSIONNAME = "sessionName";
@@ -72,29 +82,22 @@ final public class NetworkUtilities {
     public static final String PARAM_UPDATED = "timestamp";
     public static final String PARAM_ACCESSKEY = "accessKey";
     public static final String USER_AGENT = "AuthenticationService/1.0";
-    public static final int HTTP_REQUEST_TIMEOUT_MS = 500 * 1000; // ms
+    public static final int HTTP_REQUEST_TIMEOUT_MS =  10000; // ms
     public static String AUTH_URI;
 //    public static final String FETCH_FRIEND_UPDATES_URI =
 //        BASE_URL + "/fetch_friend_updates";
 //    public static final String FETCH_STATUS_URI = BASE_URL + "/fetch_status";
-
+    private static boolean LastFetchOperationStatus = false;
+    public static  String authenticate_log_text;
     public static  String sessionName;
 
     private NetworkUtilities() {
-    }
-    /**
-     * Configures the httpClient to connect to the URL provided.
-     */
-    public static HttpClient getHttpClient() {
-        HttpClient httpClient = new DefaultHttpClient();
-        final HttpParams params = httpClient.getParams();
-        HttpConnectionParams.setConnectionTimeout(params, HTTP_REQUEST_TIMEOUT_MS);
-        HttpConnectionParams.setSoTimeout(params, HTTP_REQUEST_TIMEOUT_MS);
-        ConnManagerParams.setTimeout(params, HTTP_REQUEST_TIMEOUT_MS);
-        return httpClient;
+    	authenticate_log_text = "-";
     }
 
-   
+    public static String getLogStatus(){
+    	return authenticate_log_text;
+    }
 
     /**
      * Connects to the  server, authenticates the provided username and
@@ -102,53 +105,90 @@ final public class NetworkUtilities {
      * 
      * @param username The user's username
      * @param password The user's password
-     * @param handler The hander instance from the calling UI thread.
-     * @param context The context of the calling Activity.
-     * @return boolean The boolean result indicating whether the user was
-     *         successfully authenticated.
+     * @return String The authentication token returned by the server (or null)
      */
     public static String authenticate(String username, String accessKey,String base_url) {
-        final HttpResponse resp;
         String token = null;
         String hash = null;
-        //FIXME:
+        authenticate_log_text = "authenticate()\n";
         AUTH_URI = base_url+ "/webservice.php";
+        authenticate_log_text= authenticate_log_text + "url: " + AUTH_URI +"?operation=getchallenge&username="+username+"\n";
+
+        
         // =========== get challenge token ==============================
-        final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
+        ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
         try {
-			final HttpGet httpGet = new HttpGet(AUTH_URI+"?operation=getchallenge&username="+username);
-			
-			final ResponseHandler<String> resphandler = new BasicResponseHandler();
         	
-			String body;
-			body = getHttpClient().execute(httpGet,resphandler);
-//			if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {  
-//				String body ;
-				
-				Log.i(TAG,"message");
-				Log.i(TAG,body);
-				JSONObject result=new JSONObject(body);
-				Log.i(TAG,result.getString("result"));
-	            JSONObject data=new JSONObject(result.getString("result"));
-	            token = data.getString("token");
-	            Log.i(TAG,token);
+        	URL url;
+
+			// HTTP GET REQUEST
+			url = new URL(AUTH_URI+"?operation=getchallenge&username="+username);
+			HttpURLConnection con;
+			con = (HttpURLConnection) url.openConnection();		    
+		    con.setRequestMethod("GET");
+	        con.setRequestProperty("Content-length", "0");
+	        con.setUseCaches(false);
+	        con.setAllowUserInteraction(false);
+	        int timeout = 20000;
+			con.setConnectTimeout(timeout );
+	        con.setReadTimeout(timeout);
+	        con.connect();
+	        int status = con.getResponseCode();
+
+	        authenticate_log_text= authenticate_log_text + "status = " + status;
+	        switch (status) {
+	            case 200:
+	            case 201:
+	                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+	                StringBuilder sb = new StringBuilder();
+	                String line;
+	                while ((line = br.readLine()) != null) {
+	                    sb.append(line+"\n");
+	                }
+	                br.close();
+					Log.d(TAG,"message body");
+					Log.d(TAG,sb.toString());
+					
+					authenticate_log_text = authenticate_log_text + "body : " + sb.toString(); 
+	                
+					JSONObject result=new JSONObject(sb.toString());
+					Log.d(TAG,result.getString("result"));
+		            JSONObject data=new JSONObject(result.getString("result"));
+		            token = data.getString("token");
+		            break;
+	            case 401: 
+	            	 Log.e(TAG, "Server auth error: ");// + readResponse(con.getErrorStream()));
+	            	 authenticate_log_text = authenticate_log_text + "Server auth error";
+	            	 return null;
+			default:
+	            	 Log.e(TAG, "connection status code " + status);// + readResponse(con.getErrorStream()));
+	            	 authenticate_log_text = authenticate_log_text + "connection status code :" + status;
+	            	return null;
+	        }
+
+		  
              
         } catch (ClientProtocolException e) {
         	Log.i(TAG,"http protocol error");
             Log.e(TAG, e.getMessage());
+            authenticate_log_text = authenticate_log_text + "ClientProtocolException :" + e.getMessage() + "\n";
            return null;
         } catch (IOException e) {
         	Log.e(TAG,"IO Exception");
             //Log.e(TAG, e.getMessage());
-            Log.e(TAG,AUTH_URI+"?operation=getchallenge&username="+username);            
+            Log.e(TAG,AUTH_URI+"?operation=getchallenge&username="+username);  
+            authenticate_log_text = authenticate_log_text + "IO Exception : "+e.getMessage()+"\n";
         	return null;
  
         } catch (JSONException e) {
         	Log.i(TAG,"json excpetion");
+        	authenticate_log_text = authenticate_log_text + "JSon exception\n";
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
+
+     
         // ================= login ==================
 
         try {
@@ -159,42 +199,40 @@ final public class NetworkUtilities {
         	 Log.i(TAG,"hash");
         	 Log.i(TAG,hash);
         } catch (NoSuchAlgorithmException e) {
+        	authenticate_log_text = authenticate_log_text + "MD5 => no such algorithm\n"; 
             e.printStackTrace();
         }
-//        // FIXME: sleep ?
+  
         try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e1) {
-			
-			Log.i(TAG,"sleep fail");
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-    
-        params.clear();
-        params.add(new BasicNameValuePair(PARAM_OPERATION, "login"));
-        params.add(new BasicNameValuePair(PARAM_USERNAME, username));
-        params.add(new BasicNameValuePair(PARAM_ACCESSKEY,hash));
-        HttpEntity entity2 = null;
-        try {
+        	 String charset;
+             charset = "utf-8";
+             String query = String.format("operation=login&username=%s&accessKey=%s", 
+            	     URLEncoder.encode(username, charset), 
+            	     URLEncoder.encode(hash, charset));
+             
+             URLConnection connection = new URL(AUTH_URI).openConnection();
+             connection.setDoOutput(true); // Triggers POST.
+      
+             connection.setRequestProperty("Accept-Charset", charset);
+             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=" + charset);
 
-            entity2 = new UrlEncodedFormEntity(params);
-        } catch (final UnsupportedEncodingException e) {
-            // this should never happen.
-            throw new AssertionError(e);
-        }
-        final HttpPost post2 = new HttpPost(AUTH_URI);
-        post2.setEntity(entity2);
-
-        Log.i(TAG,"login");
-        Log.i(TAG,username);
-        Log.i(TAG,accessKey);
-        try {
-            final ResponseHandler<String> resphandler = new BasicResponseHandler();
-            String body = getHttpClient().execute(post2, resphandler);
-            Log.i(TAG,"message login");
-            Log.i(TAG,body);
-            JSONObject result=new JSONObject(body);
+             OutputStream output = connection.getOutputStream();
+             try {
+                  output.write(query.getBytes(charset));
+             } finally {
+                  try { output.close(); } catch (IOException logOrIgnore) {}
+             }
+            BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line+"\n");
+            }
+            br.close();
+    		Log.d(TAG,"message post body");
+    		Log.d(TAG,sb.toString());
+    		authenticate_log_text = authenticate_log_text + "post message body :" + sb.toString() + "\n";
+    		JSONObject result=new JSONObject(sb.toString());
            
             String success = result.getString("success");
             Log.i(TAG,success);
@@ -202,14 +240,17 @@ final public class NetworkUtilities {
             if (success == "true")
             	{
             	 Log.i(TAG,result.getString("result"));
-            	Log.i(TAG,"sucesss is true");
+            	Log.i(TAG,"sucesssfully logged  in is");
                 JSONObject data=new JSONObject(result.getString("result"));
             	sessionName = data.getString("sessionName");
             
             	Log.i(TAG,sessionName);
+            	authenticate_log_text = authenticate_log_text  + "successfully logged in\n";
             	return token;
             	}
             else {
+            	authenticate_log_text = authenticate_log_text  + "CAN NOT LOG IN\n";
+            	
             	return null;
             }
             //token = data.getString("token");
@@ -217,44 +258,27 @@ final public class NetworkUtilities {
         } catch (ClientProtocolException e) {
         	Log.i(TAG,"http protocol error");
             Log.e(TAG, e.getMessage());
+        	authenticate_log_text = authenticate_log_text  + "HTTP Protocol error " + e.getMessage()+"\n";
         } catch (IOException e) {
-            Log.e(TAG, e.getMessage());
+
+        	Log.e(TAG, e.getMessage());
+        	authenticate_log_text = authenticate_log_text  + "IO Exception " + e.getMessage()+"\n";
+
         } catch (JSONException e) {
 			// TODO Auto-generated catch block
+        	authenticate_log_text = authenticate_log_text  + "JSON exception " + e.getMessage()+"\n";
+
 			e.printStackTrace();
         }
         return null;
         // ========================================================================
-//        try {
-//            resp = mHttpClient.execute(post);
-//            if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-//                if (Log.isLoggable(TAG, Log.VERBOSE)) {
-//                    Log.v(TAG, "Successful authentication");
-//                }
-//                Log.i(TAG,"response"+resp);
-//                sendResult(true, handler, context);
-//                return true;
-//            } else {
-//                if (Log.isLoggable(TAG, Log.VERBOSE)) {
-//                    Log.v(TAG, "Error authenticating" + resp.getStatusLine());
-//                }
-//                sendResult(false, handler, context);
-//                return false;
-//            }
-//        } catch (final IOException e) {
-//            if (Log.isLoggable(TAG, Log.VERBOSE)) {
-//                Log.v(TAG, "IOException when getting authtoken", e);
-//            }
-//            sendResult(false, handler, context);
-//            return false;
-//        } finally {
-//            if (Log.isLoggable(TAG, Log.VERBOSE)) {
-//                Log.v(TAG, "getAuthtoken completing");
-//            }
-//        }
+
     }
 
-   
+    public static boolean getLastOperationStatus()
+    {
+    	return LastFetchOperationStatus;
+    }
     /**
      * Fetches the list of friend data updates from the server
      * 
@@ -264,15 +288,16 @@ final public class NetworkUtilities {
      * @return list The list of updates received from the server.
      */
     public static List<User> fetchFriendUpdates(Account account,
+    	String auth_url,
         String authtoken, long serverSyncState/*Date lastUpdated*/,String type_contact) throws JSONException,
         ParseException, IOException, AuthenticationException {
-        final ArrayList<User> friendList = new ArrayList<User>();
-        final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
+        ArrayList<User> friendList = new ArrayList<User>();
+        ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
         params.add(new BasicNameValuePair(PARAM_OPERATION, "sync"));
         params.add(new BasicNameValuePair(PARAM_SESSIONNAME, sessionName));
         params.add(new BasicNameValuePair("modifiedTime","878925701" )); // il y a 14 ans.... 
         params.add(new BasicNameValuePair("elementType",type_contact));  // "Accounts,Leads , Contacts... 
-        Log.i(TAG,"fetchFriendUpdates");
+        Log.d(TAG,"fetchFriendUpdates");
         //   params.add(new BasicNameValuePair(PARAM_QUERY, "select firstname,lastname,mobile,email,homephone,phone from Contacts;"));
 //        if (lastUpdated != null) {
 //            final SimpleDateFormat formatter =
@@ -281,24 +306,40 @@ final public class NetworkUtilities {
 //            params.add(new BasicNameValuePair(PARAM_UPDATED, formatter
 //                .format(lastUpdated)));
 //        }
-        Log.i(TAG, params.toString());
+       
+     // HTTP GET REQUEST
+		URL url = new URL(auth_url+"/webservice.php?"+URLEncodedUtils.format(params, "utf-8"));
+		HttpURLConnection con;
+		con = (HttpURLConnection) url.openConnection();		    
+	    con.setRequestMethod("GET");
+        con.setRequestProperty("Content-length", "0");
+        con.setRequestProperty("accept", "application/json");
 
-        final HttpGet post = new HttpGet(AUTH_URI+"?"+URLEncodedUtils.format(params, "utf-8"));
-       // post.addHeader(entity.getContentType());
-        post.addHeader("accept","application/json");
+        con.setUseCaches(false);
+        con.setAllowUserInteraction(false);
+        int timeout = 10000; // si tiemout pas assez important la connection echouait =>IOEXception
+		con.setConnectTimeout(timeout );
+        con.setReadTimeout(timeout);
+        con.connect();
+        int status = con.getResponseCode();
 
-        //post.setEntity(entity);
-       // maybeCreateHttpClient();
-
-        final HttpResponse resp = getHttpClient().execute(post);
-
-        if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+        LastFetchOperationStatus = true;
+        if (status == HttpURLConnection.HTTP_OK) {
             // Succesfully connected to the samplesyncadapter server and
             // authenticated.
             // Extract friends data in json format.
-            String response = EntityUtils.toString(resp.getEntity());
+        	
+        	BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line+"\n");
+            }
+            br.close();
+            
+            
+            String response = sb.toString();
          	Log.i(TAG,"--response--");
-        	Log.i(TAG, response);
         	// <Hack> to bypass vtiger 5.4 webservice bug:
         	int idx  = response.indexOf("{\"success");
         	response = response.substring(idx);
@@ -319,20 +360,23 @@ final public class NetworkUtilities {
             }
             }
             else {
-            	
+            	LastFetchOperationStatus = false;
             // FIXME: else false...
             // possible error code :
             //{"success":false,"error":{"code":"AUTHENTICATION_REQUIRED","message":"Authencation required"}}
             //            	throw new AuthenticationException();
             }
         } else {
-            if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+            if (status== HttpURLConnection.HTTP_UNAUTHORIZED) {
+            	LastFetchOperationStatus = false;
+
                 Log.e(TAG,
                     "Authentication exception in fetching remote contacts");
                 throw new AuthenticationException();
             } else {
-                Log.e(TAG, "Server error in fetching remote contacts: "
-                    + resp.getStatusLine());
+            	LastFetchOperationStatus = false;
+
+                Log.e(TAG, "Server error in fetching remote contacts: ");
                 throw new IOException();
             }
         }
