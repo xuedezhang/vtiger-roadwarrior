@@ -49,7 +49,7 @@ public class User {
     private final String mOtherCodePostal;
     private final String mIndustry;
     private final String mAnnualRevenue;
-
+    private final String mFax;
 
     private final boolean mDeleted;
     private final int mUserId;
@@ -120,7 +120,9 @@ public class User {
     public String getCellPhone() {
         return mCellPhone;
     }
-
+    public String getFax() {
+        return mFax;
+    }
     public String getOfficePhone() {
         return mOfficePhone;
     }
@@ -138,7 +140,8 @@ public class User {
     }
 
     public User(String name, String firstName, String lastName,
-        String cellPhone, String officePhone, String homePhone, String email,String website,String organisation,
+        String fax,
+    	String cellPhone, String officePhone, String homePhone, String email,String website,String organisation,
         String address,String city,String region,String pobox,String postcode,String country,
         String otheraddress,String othercity,String otherregion,String otherpobox,String otherpostcode,String othercountry,
         String industry,String AnnualRevenue,
@@ -169,6 +172,7 @@ public class User {
         mWebsite = website;
         mDeleted = deleted;
         mUserId = userId;
+        mFax = fax;
         
     }
 
@@ -226,8 +230,8 @@ public class User {
             final String officePhone =
                 user.has("o") ? user.getString("o") : null;
             final String homePhone = user.has("homephone") ? user.getString("homephone") : null;
-           
-            final String email = user.has("email") ? user.getString("email") : null;
+            final String fax = user.has("fax") ? user.getString("fax") : null;
+            String email = user.has("email") ? user.getString("email") : null;
             final String website = user.has("website") ? user.getString("website") : null;
              //  ACCOUNTS
             String organisation = user.has("accountname") ? user.getString("accountname") : null;
@@ -316,7 +320,7 @@ public class User {
 //            userId = Integer.parseInt(contact_no.substring(3));
         	userId = user.getString("id").hashCode() | 0x80000;
 
-            return new User("serName", firstName, lastName, cellPhone,
+            return new User("serName", firstName, lastName,fax, cellPhone,
                     officePhone, homePhone, email,website, organisation,address,city,region,pobox,postcode,country,
                     ship_address,ship_city,ship_region,ship_pobox,ship_postcode,ship_country,
                     industry,annual_revenue,
@@ -342,6 +346,7 @@ public class User {
 //        	userId = Integer.parseInt(lead_no.substring(3)) ;
         	userId = user.getString("id").hashCode() | 0x80000;
             return new User("serName", firstName, lastName, cellPhone,
+            		fax,
                     officePhone, Phone, email,website, organisation,
                     address,city,region,pobox,postcode,country,
                     ship_address,ship_city,ship_region,ship_pobox,ship_postcode,ship_country,
@@ -351,19 +356,26 @@ public class User {
             }
             final String account_no = user.has("account_no") ? user.getString("account_no") : null;
             if (account_no != null){
-            Log.i("User","account "+ account_no);
-            Log.i("User", account_no.substring(3));
-            
-//            userId = Integer.parseInt(account_no.substring(3)) | 0x90000;
-        	userId = user.getString("id").hashCode() | 0x90000;
-
-            return new User("serName", firstName, lastName, cellPhone,
-                    officePhone, homePhone, email,website, organisation,
-                    address,city,region,pobox,postcode,country,
-                    ship_address,ship_city,ship_region,ship_pobox,ship_postcode,ship_country,
-                    industry,annual_revenue,
-
-                    deleted, userId);
+	            Log.i("User","account "+ account_no);
+	            Log.i("User", account_no.substring(3));
+	            
+	            if (user.has("email1"))
+	            {
+	            	email = user.getString("email1");
+	            	if (email == null)
+	            		if (user.has("email2"))
+	            			email = user.getString("email2");
+	            }
+	//            userId = Integer.parseInt(account_no.substring(3)) | 0x90000;
+	        	userId = user.getString("id").hashCode() | 0x90000;
+	
+	            return new User("serName", firstName, lastName,fax, cellPhone,
+	                    officePhone, homePhone, email,website, organisation,
+	                    address,city,region,pobox,postcode,country,
+	                    ship_address,ship_city,ship_region,ship_pobox,ship_postcode,ship_country,
+	                    industry,annual_revenue,
+	
+	                    deleted, userId);
 
             }
         } catch (final Exception ex) {

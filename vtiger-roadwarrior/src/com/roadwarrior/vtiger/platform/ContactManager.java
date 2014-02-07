@@ -31,6 +31,7 @@ import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.Settings;
 import android.provider.ContactsContract.StatusUpdates;
 import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Website;
 import android.provider.ContactsContract.CommonDataKinds.Im;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
@@ -318,7 +319,9 @@ public class ContactManager {
             ContactOperations.createNewContact(context, user.getUserId(),
                 accountName, inSync, batchOperation);
         contactOp.addName(user.getFirstName(), 
-        				  user.getLastName()).addEmail(user.getEmail()).addPhone(user.getCellPhone(), 
+        				  user.getLastName())
+        				  .addFax(user.getFax())
+        				  .addEmail(user.getEmail()).addPhone(user.getCellPhone(), 
         								  Phone.TYPE_MOBILE)
             .addPhone(user.getHomePhone(), Phone.TYPE_OTHER).addWebSite(user.getWebsite()).addOrganisation(user.getOrganisation())
             .addAddress(user.getAddress(),user.getCity(),user.getRegion(),user.getCountry(),user.getPobox(),user.getPostCode(),"Billing address")
@@ -345,7 +348,8 @@ public class ContactManager {
         String cellPhone = null;
         String otherPhone = null;
         String email = null;
-
+        String website = null;
+        String fax = null;
         final Cursor c =
                 resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
                 new String[] {String.valueOf(rawContactId)}, null);
@@ -368,7 +372,7 @@ public class ContactManager {
                     contactOp.updateName(uri, firstName, lastName, user
                         .getFirstName(), user.getLastName());
                 }
-
+                // TODO: update postal address
                 else if (mimeType.equals(Phone.CONTENT_ITEM_TYPE)) {
                     final int type = c.getInt(DataQuery.COLUMN_PHONE_TYPE);
 
@@ -381,23 +385,36 @@ public class ContactManager {
                         contactOp.updatePhone(otherPhone, user.getHomePhone(),
                             uri);
                     }
+                    else if (type == Phone.TYPE_FAX_WORK) {
+                        fax = c.getString(DataQuery.COLUMN_PHONE_NUMBER);
+                        contactOp.updateFax(fax, user.getFax(),
+                            uri);
+                    }
                 }
 
+                else if (Data.MIMETYPE.equals(Website.CONTENT_ITEM_TYPE)) {
+                    website = c.getString(DataQuery.COLUMN_WEBSITE_ADDRESS);
+                    contactOp.updateWebsite(user.getWebsite(),website, uri);               
+                    }
                 else if (Data.MIMETYPE.equals(Email.CONTENT_ITEM_TYPE)) {
                     email = c.getString(DataQuery.COLUMN_EMAIL_ADDRESS);
-                    contactOp.updateEmail(user.getEmail(), email, uri);
-
-                }
+                    contactOp.updateEmail(user.getEmail(), email, uri);               }
             } // while
         } finally {
             c.close();
         }
-
+        // Add the cell phone, if present and not updated above
+        if (fax == null) {
+            contactOp.addPhone(user.getFax(), Phone.TYPE_FAX_WORK);
+        }
         // Add the cell phone, if present and not updated above
         if (cellPhone == null) {
             contactOp.addPhone(user.getCellPhone(), Phone.TYPE_MOBILE);
         }
-
+        // Add the cell phone, if present and not updated above
+        if (website == null) {
+            contactOp.addWebSite(user.getWebsite());
+        }
         // Add the other phone, if present and not updated above
         if (otherPhone == null) {
             contactOp.addPhone(user.getHomePhone(), Phone.TYPE_OTHER);
@@ -551,13 +568,18 @@ final private static class UserIdQuery {
         public static final int COLUMN_DATA3 = 4;
 
         public static final Uri CONTENT_URI = Data.CONTENT_URI;
+        
         public static final int COLUMN_PHONE_NUMBER = COLUMN_DATA1;
         public static final int COLUMN_PHONE_TYPE = COLUMN_DATA2;
+        
         public static final int COLUMN_EMAIL_ADDRESS = COLUMN_DATA1;
         public static final int COLUMN_EMAIL_TYPE = COLUMN_DATA2;
+        
         public static final int COLUMN_GIVEN_NAME = COLUMN_DATA2;
         public static final int COLUMN_FAMILY_NAME = COLUMN_DATA3;
 
+        public static final int COLUMN_WEBSITE_ADDRESS = COLUMN_DATA1;
+        
         public static final String SELECTION = Data.RAW_CONTACT_ID + "=?";
     }
 }

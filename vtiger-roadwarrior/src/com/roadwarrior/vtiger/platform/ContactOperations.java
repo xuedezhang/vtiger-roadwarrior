@@ -159,7 +159,7 @@ public class ContactOperations {
         mValues.clear();
         if (!TextUtils.isEmpty(email)) {
             mValues.put(Email.DATA, email);
-            mValues.put(Email.TYPE, Email.TYPE_OTHER);
+            mValues.put(Email.TYPE, Email.TYPE_WORK);
             mValues.put(Email.MIMETYPE, Email.CONTENT_ITEM_TYPE);
             addInsertOp();
         }
@@ -184,6 +184,24 @@ public class ContactOperations {
         return this;
     }
 
+
+    /**
+     * Adds a fax number
+     * 
+     * @param fax new phone number for the contact
+    .
+     * @return instance of ContactOperations
+     */
+    public ContactOperations addFax(String fax) {
+        mValues.clear();
+        if (!TextUtils.isEmpty(fax)) {
+            mValues.put(Phone.NUMBER,fax);
+            mValues.put(Phone.TYPE, Phone.TYPE_FAX_WORK);
+            mValues.put(Phone.MIMETYPE, Phone.CONTENT_ITEM_TYPE);
+            addInsertOp();
+        }
+        return this;
+    }
     /**
      * Adds a website
      * 
@@ -314,6 +332,22 @@ public class ContactOperations {
     }
 
     /**
+     * Updates website
+     * 
+     * @param websitel id of the sample SyncAdapter user
+     * @param uri Uri for the existing raw contact to be updated
+     * @return instance of ContactOperations
+     */
+    public ContactOperations updateWebsite(String website, String existingWebsite,
+        Uri uri) {
+        if (!TextUtils.equals(existingWebsite, website)) {
+            mValues.clear();
+            mValues.put(Website.DATA, website);
+            addUpdateOp(uri);
+        }
+        return this;
+    }
+    /**
      * Updates contact's name
      * 
      * @param name Name of contact
@@ -356,7 +390,23 @@ public class ContactOperations {
         }
         return this;
     }
-
+    /**
+     * Updates contact's fax
+     * 
+     * @param existingNumber phone number stored in contacts provider
+     * @param phone new phone number for the contact
+     * @param uri Uri for the existing raw contact to be updated
+     * @return instance of ContactOperations
+     */
+    public ContactOperations updateFax(String existingNumber, String phone,
+        Uri uri) {
+        if (!TextUtils.equals(phone, existingNumber)) {
+            mValues.clear();
+            mValues.put(Phone.NUMBER, phone);
+            addUpdateOp(uri);
+        }
+        return this;
+    }
     /**
      * Updates contact's profile action
      * 
