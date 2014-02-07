@@ -90,7 +90,7 @@
     <string
         name="cancel_button_label">Cancel</string>
     <string
-        name="profile_action">Sample profile</string>
+        name="profile_action"> Profile</string>
     <string
         name="view_profile">View Profile</string>
     <string name="vtiger_url">Vtiger url</string>
@@ -99,5 +99,6 @@
     <string name="accesskey_label"> tSDSEgCe1tLnM6cz</string>
     
     <string name="sync_period_label">Sync period</string>
+  
     
 </resources>

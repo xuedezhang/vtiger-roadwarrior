@@ -25,6 +25,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.Groups;
 import android.provider.ContactsContract.RawContacts;
@@ -36,7 +37,6 @@ import android.provider.ContactsContract.CommonDataKinds.Im;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.CommonDataKinds.Organization;
-
 import android.text.format.DateUtils;
 import android.util.Log;
 
@@ -311,9 +311,6 @@ public class ContactManager {
      */
     public static void addContact(Context context, String accountName,
         User user,long groupId, boolean inSync, BatchOperation batchOperation) {
-    	// ======new code ===============
-    	
-    	
     	// ===================================================================
         // Put the data in the contacts provider
         final ContactOperations contactOp =
@@ -325,8 +322,8 @@ public class ContactManager {
         				  .addEmail(user.getEmail()).addPhone(user.getCellPhone(), 
         								  Phone.TYPE_MOBILE)
             .addPhone(user.getHomePhone(), Phone.TYPE_OTHER).addWebSite(user.getWebsite()).addOrganisation(user.getOrganisation())
-            .addAddress(user.getAddress(),user.getCity(),user.getRegion(),user.getCountry(),user.getPobox(),user.getPostCode(),"Billing address")
-            .addAddress(user.getOtherAddress(),user.getOtherCity(),user.getOtherRegion(),user.getOtherCountry(),user.getOtherPobox(),user.getOtherPostCode(),"Shipping Address")
+            .addAddress(user.getAddress(),user.getCity(),user.getRegion(),user.getCountry(),user.getPobox(),user.getPostCode(),Constants.billing_address)
+            .addAddress(user.getOtherAddress(),user.getOtherCity(),user.getOtherRegion(),user.getOtherCountry(),user.getOtherPobox(),user.getOtherPostCode(),Constants.shipping_address)
             .addGroupMembership(groupId)
             .addProfileAction(
                 user.getUserId());
@@ -354,7 +351,18 @@ public class ContactManager {
         String organisation = null;
         String organisation_department = null;
         String organisation_title = null;
-
+        String address = null;
+        String city = null;
+        String pobox = null;
+        String postcode = null;
+        String region   = null;
+        String country  = null;
+        String shipping_address = null;
+        String shipping_city = null;
+        String shipping_pobox = null;
+        String shipping_postcode = null;
+        String shipping_region   = null;
+        String shipping_country  = null;
         final Cursor c =
                 resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
                 new String[] {String.valueOf(rawContactId)}, null);
@@ -391,6 +399,57 @@ public class ContactManager {
                     contactOp.updateOrganisationTitle(organisation_department, user.getOrganisationDepartment(),uri);
                 }
                 // TODO: update postal address
+                
+                else if (mimeType.equals(StructuredPostal.CONTENT_ITEM_TYPE)) {
+//                    address,city,region,pobox,postcode,country,
+//                    ship_address,ship_city,ship_region,ship_pobox,ship_postcode,ship_country,
+                	String address_label;
+                    address_label = c.getString(DataQuery.COLUMN_LABEL_POSTAL);
+                    if (address_label.equals(Constants.billing_address))
+                    {
+                                    
+                    address = c.getString(DataQuery.COLUMN_ADRESS1_POSTAL);
+                    contactOp.updateField(StructuredPostal.STREET,address, user.getAddress(),uri);
+
+                    city = c.getString(DataQuery.COLUMN_CITY1_POSTAL);
+                    contactOp.updateField(StructuredPostal.CITY,city, user.getCity(),uri);
+                   
+                    region = c.getString(DataQuery.COLUMN_REGION1_POSTAL);
+                    contactOp.updateField(StructuredPostal.REGION,region, user.getRegion(),uri);
+
+                    pobox = c.getString(DataQuery.COLUMN_POBOX1_POSTAL);
+                    contactOp.updateField(StructuredPostal.POBOX,pobox, user.getPobox(),uri);
+
+                    postcode = c.getString(DataQuery.COLUMN_POSTCODE1_POSTAL);
+                    contactOp.updateField(StructuredPostal.POSTCODE,postcode, user.getPostCode(),uri);
+
+                    country = c.getString(DataQuery.COLUMN_COUNTRY1_POSTAL);
+                    contactOp.updateField(StructuredPostal.COUNTRY,country, user.getCountry(),uri);
+                    }
+                    // ==== shipping adress ===
+                    if (address_label.equals(Constants.shipping_address))
+                    {
+                    
+                    shipping_address = c.getString(DataQuery.COLUMN_ADRESS1_POSTAL);
+                    contactOp.updateField(StructuredPostal.STREET,shipping_address, user.getOtherAddress(),uri);
+
+                    shipping_city = c.getString(DataQuery.COLUMN_CITY1_POSTAL);
+                    contactOp.updateField(StructuredPostal.CITY,shipping_city, user.getOtherCity(),uri);
+
+                    shipping_region = c.getString(DataQuery.COLUMN_REGION1_POSTAL);
+                    contactOp.updateField(StructuredPostal.REGION,shipping_region, user.getOtherRegion(),uri);
+
+                    shipping_pobox = c.getString(DataQuery.COLUMN_POBOX1_POSTAL);
+                    contactOp.updateField(StructuredPostal.POBOX,shipping_pobox, user.getOtherPobox(),uri);
+
+                    shipping_postcode = c.getString(DataQuery.COLUMN_POSTCODE1_POSTAL);
+                    contactOp.updateField(StructuredPostal.POSTCODE,shipping_postcode, user.getOtherPostCode(),uri);
+
+                    shipping_country = c.getString(DataQuery.COLUMN_COUNTRY1_POSTAL);
+                    contactOp.updateField(StructuredPostal.COUNTRY,shipping_country, user.getOtherCountry(),uri);
+                    }
+                    
+                }
                 else if (mimeType.equals(Phone.CONTENT_ITEM_TYPE)) {
                     final int type = c.getInt(DataQuery.COLUMN_PHONE_TYPE);
 
@@ -422,6 +481,30 @@ public class ContactManager {
         } finally {
             c.close();
         }
+
+        if ((address == null) && (city == null) && (region == null) && (country == null) && (pobox == null) && (postcode == null))
+        	{
+        	address = user.getAddress();
+        	city = user.getCity();
+        	region = user.getRegion();
+        	country = user.getCountry();
+        	pobox = user.getPobox();
+        	postcode = user.getPostCode();
+        	contactOp.addAddress(address,city,region,country,pobox,postcode, Constants.billing_address);
+
+        	}
+        
+        if ((shipping_address == null) && (shipping_city == null) && (shipping_region == null) && (shipping_country == null) && (shipping_pobox == null) && (shipping_postcode == null))
+    	{
+    	shipping_address = user.getOtherAddress();
+    	shipping_city = user.getOtherCity();
+    	shipping_region = user.getOtherRegion();
+    	shipping_country = user.getOtherCountry();
+    	shipping_pobox = user.getOtherPobox();
+    	shipping_postcode = user.getOtherPostCode();
+    	contactOp.addAddress(shipping_address,shipping_city,shipping_region,shipping_country,shipping_pobox,shipping_postcode, Constants.shipping_address);
+
+    	}  
         // Add the cell phone, if present and not updated above
         if (fax == null) {
             contactOp.addPhone(user.getFax(), Phone.TYPE_FAX_WORK);
@@ -440,7 +523,6 @@ public class ContactManager {
         }
         // Add the email address, if present and not updated above
         if (email == null) {
-        	Log.d(TAG,"ben on rajoute l email");
             contactOp.addEmail(user.getEmail());
         }
 
@@ -589,21 +671,27 @@ final private static class UserIdQuery {
 
         public static final String[] PROJECTION =
             new String[] {Data._ID, Data.MIMETYPE, Data.DATA1, Data.DATA2,
-                Data.DATA3,};
+                Data.DATA3,Data.DATA4,Data.DATA5,Data.DATA6,Data.DATA7,Data.DATA8,Data.DATA9,Data.DATA10 };
 
         public static final int COLUMN_ID = 0;
         public static final int COLUMN_MIMETYPE = 1;
         public static final int COLUMN_DATA1 = 2;
         public static final int COLUMN_DATA2 = 3;
         public static final int COLUMN_DATA3 = 4;
-
+        public static final int COLUMN_DATA4 = 5;
+        public static final int COLUMN_DATA5 = 6;
+        public static final int COLUMN_DATA6 = 7;
+        public static final int COLUMN_DATA7 = 8;
+        public static final int COLUMN_DATA8 = 9;
+        public static final int COLUMN_DATA9 = 10;
+        public static final int COLUMN_DATA10 = 11;
+        
         public static final Uri CONTENT_URI = Data.CONTENT_URI;
         
         public static final int COLUMN_PHONE_NUMBER = COLUMN_DATA1;
         public static final int COLUMN_PHONE_TYPE = COLUMN_DATA2;
         
         public static final int COLUMN_EMAIL_ADDRESS = COLUMN_DATA1;
-        public static final int COLUMN_EMAIL_TYPE = COLUMN_DATA2;
         
         public static final int COLUMN_GIVEN_NAME = COLUMN_DATA2;
         public static final int COLUMN_FAMILY_NAME = COLUMN_DATA3;
@@ -613,6 +701,15 @@ final private static class UserIdQuery {
         public static final int COLUMN_ORGANISATION_NAME = COLUMN_DATA1;
         public static final int COLUMN_ORGANISATION_TITLE = COLUMN_DATA2;
         public static final int COLUMN_ORGANISATION_DEPARTMENT = COLUMN_DATA3;
+        // StructuredPostalCode
+        public static final int COLUMN_LABEL_POSTAL = COLUMN_DATA3;
+        public static final int COLUMN_ADRESS1_POSTAL = COLUMN_DATA4;
+        public static final int COLUMN_POBOX1_POSTAL  = COLUMN_DATA5;
+        public static final int COLUMN_CITY1_POSTAL   = COLUMN_DATA7;
+        public static final int COLUMN_REGION1_POSTAL = COLUMN_DATA8;
+        public static final int COLUMN_POSTCODE1_POSTAL = COLUMN_DATA9;
+        public static final int COLUMN_COUNTRY1_POSTAL = COLUMN_DATA10;
+
         
         public static final String SELECTION = Data.RAW_CONTACT_ID + "=?";
     }

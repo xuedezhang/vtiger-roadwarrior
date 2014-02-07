@@ -23,10 +23,13 @@ public class Constants {
      */
     public static final String ACCOUNT_TYPE = "com.roadwarrior.vtiger";
 
+    
     /**
      * Authtoken type string.
      */
     public static final String AUTHTOKEN_TYPE =
         "com.roadwarrior.vtiger";
 
+    public static final String shipping_address = "Shipping address";
+    public static final String billing_address = "Billing address";
 }

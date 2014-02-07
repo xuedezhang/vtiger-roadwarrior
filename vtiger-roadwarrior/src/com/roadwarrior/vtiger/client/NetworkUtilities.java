@@ -130,7 +130,7 @@ final public class NetworkUtilities {
 		    con.setRequestMethod("GET");
 	        con.setRequestProperty("Content-length", "0");
 	        con.setUseCaches(false);
-	        // for demo.vtiger.com that redirects based on user agent
+	        // for some site that redirects based on user agent
 	        con.setInstanceFollowRedirects(true);
 	        con.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.0.15) Gecko/2009101600 Firefox/3.0.15");
 	        con.setAllowUserInteraction(false);

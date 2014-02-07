@@ -439,6 +439,24 @@ public class ContactOperations {
         }
     
     /**
+     * generic Updates Field
+     * 
+     * @param FieldName FieldName
+     * @param existingValue existing field  stored in contacts provider
+     * @param newvalue new fieldname name for the contact
+     * @param uri Uri for the existing raw contact to be updated
+     * @return instance of ContactOperations
+     */
+    public ContactOperations updateField(String FieldName,String existingValue, String newvalue,
+            Uri uri) {
+            if (!TextUtils.equals(newvalue,existingValue)) {
+                mValues.clear();
+                mValues.put(FieldName, newvalue);
+                addUpdateOp(uri);
+            }
+            return this;
+        }
+    /**
      * Updates organisation department
      * 
      * @param existing organisation department stored in contacts provider
