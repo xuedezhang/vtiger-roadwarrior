@@ -64,6 +64,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -386,7 +387,31 @@ final public class NetworkUtilities {
             // == VTiger updated contacts ==
             for (int i = 0; i < friends.length(); i++) {
                 friendList.add(User.valueOf(friends.getJSONObject(i)));
+            }
+            // == Vtiger contacts deleted ===
+            String deleted_contacts = data.getString("deleted");
+            Log.d(TAG,deleted_contacts);
 
+            List<String> items = Arrays.asList(deleted_contacts.substring(deleted_contacts.indexOf("[")+1,deleted_contacts.indexOf("]")).split("\\s*,\\s*"));
+
+           	if (items.get(ii).startsWith("\"4x")) // this is a contact
+            	{
+            	//Log.d(TAG,"{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":1}");
+            	JSONObject item = new JSONObject("{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":\"CON1\"}");
+            	friendList.add(User.valueOf(item));
+            	}
+           	if (items.get(ii).startsWith("\"3x")) // this is an account
+        	{
+        	//Log.d(TAG,"{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":1}");
+        	JSONObject item = new JSONObject("{\"id\":"+items.get(ii)+",\"d\":true,\"account_no\":\"ACC1\"}");
+        	friendList.add(User.valueOf(item));
+        	}	
+        	if (items.get(ii).startsWith("\"2x")) // this is a lead
+        	{
+        	//Log.d(TAG,"{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":1}");
+        	JSONObject item = new JSONObject("{\"id\":"+items.get(ii)+",\"d\":true,\"lead_no\":\"LEA1\"}");
+        	friendList.add(User.valueOf(item));
+        	}	
             }
             }
             else {

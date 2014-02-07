@@ -313,7 +313,9 @@ public class User {
             if (contact_no != null){
             Log.i("User", contact_no);
             Log.i("User", contact_no.substring(3));
-            userId = Integer.parseInt(contact_no.substring(3));
+//            userId = Integer.parseInt(contact_no.substring(3));
+        	userId = user.getString("id").hashCode() | 0x80000;
+
             return new User("serName", firstName, lastName, cellPhone,
                     officePhone, homePhone, email,website, organisation,address,city,region,pobox,postcode,country,
                     ship_address,ship_city,ship_region,ship_pobox,ship_postcode,ship_country,
@@ -337,7 +339,8 @@ public class User {
         	if (user.has("code")) 
         		postcode = user.getString("code");
 
-        	userId = Integer.parseInt(lead_no.substring(3)) | 0x80000;
+//        	userId = Integer.parseInt(lead_no.substring(3)) ;
+        	userId = user.getString("id").hashCode() | 0x80000;
             return new User("serName", firstName, lastName, cellPhone,
                     officePhone, Phone, email,website, organisation,
                     address,city,region,pobox,postcode,country,
@@ -350,7 +353,10 @@ public class User {
             if (account_no != null){
             Log.i("User","account "+ account_no);
             Log.i("User", account_no.substring(3));
-            userId = Integer.parseInt(account_no.substring(3)) | 0x90000;
+            
+//            userId = Integer.parseInt(account_no.substring(3)) | 0x90000;
+        	userId = user.getString("id").hashCode() | 0x90000;
+
             return new User("serName", firstName, lastName, cellPhone,
                     officePhone, homePhone, email,website, organisation,
                     address,city,region,pobox,postcode,country,
