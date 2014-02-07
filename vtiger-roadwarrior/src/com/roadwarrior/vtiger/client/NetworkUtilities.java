@@ -391,27 +391,28 @@ final public class NetworkUtilities {
             // == Vtiger contacts deleted ===
             String deleted_contacts = data.getString("deleted");
             Log.d(TAG,deleted_contacts);
-
+            Log.d(TAG,deleted_contacts.substring(deleted_contacts.indexOf("[")));
             List<String> items = Arrays.asList(deleted_contacts.substring(deleted_contacts.indexOf("[")+1,deleted_contacts.indexOf("]")).split("\\s*,\\s*"));
-
-           	if (items.get(ii).startsWith("\"4x")) // this is a contact
-            	{
-            	//Log.d(TAG,"{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":1}");
-            	JSONObject item = new JSONObject("{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":\"CON1\"}");
-            	friendList.add(User.valueOf(item));
-            	}
-           	if (items.get(ii).startsWith("\"3x")) // this is an account
-        	{
-        	//Log.d(TAG,"{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":1}");
-        	JSONObject item = new JSONObject("{\"id\":"+items.get(ii)+",\"d\":true,\"account_no\":\"ACC1\"}");
-        	friendList.add(User.valueOf(item));
-        	}	
-        	if (items.get(ii).startsWith("\"2x")) // this is a lead
-        	{
-        	//Log.d(TAG,"{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":1}");
-        	JSONObject item = new JSONObject("{\"id\":"+items.get(ii)+",\"d\":true,\"lead_no\":\"LEA1\"}");
-        	friendList.add(User.valueOf(item));
-        	}	
+            for (int ii = 0; ii < items.size(); ii++) {
+            	Log.d(TAG,items.get(ii));
+	           	if (items.get(ii).startsWith("\"4x")) // this is a contact
+	            	{
+	            	//Log.d(TAG,"{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":1}");
+	            	JSONObject item = new JSONObject("{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":\"CON1\"}");
+	            	friendList.add(User.valueOf(item));
+	            	}
+	           	if (items.get(ii).startsWith("\"3x")) // this is an account
+		        	{
+		        	//Log.d(TAG,"{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":1}");
+		        	JSONObject item = new JSONObject("{\"id\":"+items.get(ii)+",\"d\":true,\"account_no\":\"ACC1\"}");
+		        	friendList.add(User.valueOf(item));
+		        	}	
+	        	if (items.get(ii).startsWith("\"2x")) // this is a lead
+		        	{
+		        	//Log.d(TAG,"{\"id\":"+items.get(ii)+",\"d\":true,\"contact_no\":1}");
+		        	JSONObject item = new JSONObject("{\"id\":"+items.get(ii)+",\"d\":true,\"lead_no\":\"LEA1\"}");
+		        	friendList.add(User.valueOf(item));
+		        	}	
             }
             }
             else {
