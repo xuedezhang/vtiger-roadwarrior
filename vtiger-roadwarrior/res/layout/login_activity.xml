@@ -103,7 +103,7 @@
                  />
 
             <TextView
-                android:id="@+id/message_bottom"
+                android:id="@+id/error_message"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

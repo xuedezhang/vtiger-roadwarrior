@@ -114,7 +114,8 @@ final public class NetworkUtilities {
         AUTH_URI = base_url+ "/webservice.php";
         authenticate_log_text= authenticate_log_text + "url: " + AUTH_URI +"?operation=getchallenge&username="+username+"\n";
 
-        
+        Log.d(TAG,"AUTH_URI : ");
+        Log.d(TAG,AUTH_URI+"?operation=getchallenge&username="+username);
         // =========== get challenge token ==============================
         ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
         try {
@@ -128,6 +129,9 @@ final public class NetworkUtilities {
 		    con.setRequestMethod("GET");
 	        con.setRequestProperty("Content-length", "0");
 	        con.setUseCaches(false);
+	        // for demo.vtiger.com that redirects based on user agent
+	        con.setInstanceFollowRedirects(true);
+	        con.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.0.15) Gecko/2009101600 Firefox/3.0.15");
 	        con.setAllowUserInteraction(false);
 	        int timeout = 20000;
 			con.setConnectTimeout(timeout );
@@ -135,10 +139,11 @@ final public class NetworkUtilities {
 	        con.connect();
 	        int status = con.getResponseCode();
 
-	        authenticate_log_text= authenticate_log_text + "status = " + status;
+	        authenticate_log_text= authenticate_log_text + "Request status = " + status +"\n";
 	        switch (status) {
 	            case 200:
 	            case 201:
+	            case 302:
 	                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
 	                StringBuilder sb = new StringBuilder();
 	                String line;
@@ -150,7 +155,12 @@ final public class NetworkUtilities {
 					Log.d(TAG,sb.toString());
 					
 					authenticate_log_text = authenticate_log_text + "body : " + sb.toString(); 
-	                
+		        	if (status == 302)
+		        		{
+		        		authenticate_log_text = sb.toString();
+		        		return null;
+		        		}
+		        		
 					JSONObject result=new JSONObject(sb.toString());
 					Log.d(TAG,result.getString("result"));
 		            JSONObject data=new JSONObject(result.getString("result"));
@@ -169,20 +179,21 @@ final public class NetworkUtilities {
 		  
              
         } catch (ClientProtocolException e) {
-        	Log.i(TAG,"http protocol error");
+        	Log.i(TAG,"getchallenge:http protocol error");
             Log.e(TAG, e.getMessage());
             authenticate_log_text = authenticate_log_text + "ClientProtocolException :" + e.getMessage() + "\n";
            return null;
         } catch (IOException e) {
-        	Log.e(TAG,"IO Exception");
-            //Log.e(TAG, e.getMessage());
+        	Log.e(TAG,"getchallenge: IO Exception");
+            Log.e(TAG, e.getMessage());
             Log.e(TAG,AUTH_URI+"?operation=getchallenge&username="+username);  
-            authenticate_log_text = authenticate_log_text + "IO Exception : "+e.getMessage()+"\n";
+            authenticate_log_text = authenticate_log_text + "getchallenge: IO Exception : "+e.getMessage()+"\n";
         	return null;
  
         } catch (JSONException e) {
-        	Log.i(TAG,"json excpetion");
+        	Log.i(TAG,"json exception");
         	authenticate_log_text = authenticate_log_text + "JSon exception\n";
+
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
@@ -209,19 +220,26 @@ final public class NetworkUtilities {
              String query = String.format("operation=login&username=%s&accessKey=%s", 
             	     URLEncoder.encode(username, charset), 
             	     URLEncoder.encode(hash, charset));
-             
+             authenticate_log_text = authenticate_log_text + "login()\n";
              URLConnection connection = new URL(AUTH_URI).openConnection();
              connection.setDoOutput(true); // Triggers POST.
-      
+ 			 int timeout = 20000;
+             connection.setConnectTimeout(timeout );
+	         connection.setReadTimeout(timeout);
+		     connection.setAllowUserInteraction(false);
              connection.setRequestProperty("Accept-Charset", charset);
              connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=" + charset);
+ 	         connection.setUseCaches(false);
 
              OutputStream output = connection.getOutputStream();
              try {
                   output.write(query.getBytes(charset));
              } finally {
-                  try { output.close(); } catch (IOException logOrIgnore) {}
+                  try { output.close(); } catch (IOException logOrIgnore) {
+                	  
+                  }
              }
+            Log.d(TAG,"Query written");
             BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             StringBuilder sb = new StringBuilder();
             String line;
@@ -249,25 +267,31 @@ final public class NetworkUtilities {
             	return token;
             	}
             else {
-            	authenticate_log_text = authenticate_log_text  + "CAN NOT LOG IN\n";
+            	// success is false, retrieve error
+            	JSONObject data=new JSONObject(result.getString("error"));
+            	authenticate_log_text = "can not login :\n" + data.toString();
             	
             	return null;
             }
             //token = data.getString("token");
             //Log.i(TAG,token);
         } catch (ClientProtocolException e) {
-        	Log.i(TAG,"http protocol error");
-            Log.e(TAG, e.getMessage());
-        	authenticate_log_text = authenticate_log_text  + "HTTP Protocol error " + e.getMessage()+"\n";
+        	Log.d(TAG,"login: http protocol error");
+            Log.d(TAG, e.getMessage());
+        	authenticate_log_text = authenticate_log_text  + "HTTP Protocol error \n";
+        	authenticate_log_text = authenticate_log_text  + e.getMessage() + "\n";
         } catch (IOException e) {
+        	Log.d(TAG, "login: IO Exception");
+        	Log.d(TAG, e.getMessage());
 
-        	Log.e(TAG, e.getMessage());
-        	authenticate_log_text = authenticate_log_text  + "IO Exception " + e.getMessage()+"\n";
+        	authenticate_log_text = authenticate_log_text  + "login: IO Exception \n";
+        	authenticate_log_text = authenticate_log_text  + e.getMessage()+"\n";
 
         } catch (JSONException e) {
+        	Log.d(TAG,"JSON exception");
 			// TODO Auto-generated catch block
-        	authenticate_log_text = authenticate_log_text  + "JSON exception " + e.getMessage()+"\n";
-
+        	authenticate_log_text = authenticate_log_text  + "JSON exception ";
+        	authenticate_log_text = authenticate_log_text  + e.getMessage();
 			e.printStackTrace();
         }
         return null;
@@ -359,9 +383,10 @@ final public class NetworkUtilities {
             Log.i(TAG,result.getString("result"));
             final JSONObject data = new JSONObject(result.getString("result"));
             final JSONArray friends = new JSONArray(data.getString("updated"));
-            
+            // == VTiger updated contacts ==
             for (int i = 0; i < friends.length(); i++) {
                 friendList.add(User.valueOf(friends.getJSONObject(i)));
+
             }
             }
             else {

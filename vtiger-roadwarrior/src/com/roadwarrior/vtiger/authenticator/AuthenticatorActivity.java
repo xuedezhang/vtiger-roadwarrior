@@ -26,9 +26,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
+import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -68,6 +70,8 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
 
     /** for posting authentication attempts back to UI thread */
     private TextView mMessage;
+    private TextView mErrorMessage;
+
     private String mPassword;
     private EditText mPasswordEdit;
     private String mUrl;
@@ -116,7 +120,8 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         mUsernameEdit = (EditText) findViewById(R.id.username_edit);
         mPasswordEdit = (EditText) findViewById(R.id.password_edit);
         mUrlEdit =  (EditText) findViewById(R.id.url_edit);
-        
+        mErrorMessage = (TextView) findViewById(R.id.error_message);
+
         mMessage.setText(getMessage());
     }
 
@@ -155,6 +160,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
     	mUsername = mUsernameEdit.getText().toString();
         mPassword = mPasswordEdit.getText().toString();
         mUrl = mUrlEdit.getText().toString();
+        mErrorMessage.setText("");
         if (TextUtils.isEmpty(mUrl)||TextUtils.isEmpty(mUsername) || TextUtils.isEmpty(mPassword)) {
             mMessage.setText(getMessage());
         } else {
@@ -234,7 +240,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
             editor.putString("vtiger_url",mUrl);
             editor.putString("username",mUsername);
             editor.putString("password",mPassword);
-            editor.putString("sync_period","3600");
+            editor.putString("sync_period","3600"); // default sync period 1h
             editor.commit();
 //            if (!mConfirmCredentials) {
             finishLogin(authToken);
@@ -245,17 +251,38 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
 
 
         } else {
-            Log.e(TAG, "onAuthenticationResult: failed to authenticate");
+            Log.d(TAG, "onAuthenticationResult: failed to authenticate");
+//            mMessage.setBackgroundColor(0xff);
+//            mMessage.setTextColor(0xff00);
+            
             if (mRequestNewAccount) {
                 // "Please enter a valid username/password.
                 mMessage
                     .setText(getText(R.string.login_activity_loginfail_text_both));
+  
             } else {
                 // "Please enter a valid password." (Used when the
                 // account is already in the database but the password
                 // doesn't work.)
                 mMessage
                     .setText(getText(R.string.login_activity_loginfail_text_pwonly));
+            }
+            Log.d(TAG,"logstatus:");
+            String ErrorMessage;
+            ErrorMessage = NetworkUtilities.getLogStatus();
+            Log.d(TAG,ErrorMessage);
+            mErrorMessage.setTextColor(Color.rgb(200,0,0));
+            if (ErrorMessage.indexOf("INVALID_USER_CREDENTIELS") != -1)
+            {
+            	ErrorMessage = "Check your Accesskey, it can be found in your vtiger user preferences.\n" +ErrorMessage;
+            }
+//            if (ErrorMessage.indexOf("<html>") != -1)
+//            {
+//            	mMessage.setText(Html.fromHtml(ErrorMessage));
+//            }
+//            else
+            {
+            	mErrorMessage.setText(ErrorMessage);
             }
         }
     }
@@ -301,7 +328,6 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
     private void hideProgress() {
         if (mProgressDialog != null) {
             mProgressDialog.dismiss();
-            mProgressDialog = null;
         }
     }
 
