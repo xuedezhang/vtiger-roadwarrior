@@ -321,7 +321,10 @@ public class ContactManager {
         				  .addFax(user.getFax())
         				  .addEmail(user.getEmail()).addPhone(user.getCellPhone(), 
         								  Phone.TYPE_MOBILE)
-            .addPhone(user.getHomePhone(), Phone.TYPE_OTHER).addWebSite(user.getWebsite()).addOrganisation(user.getOrganisation())
+            .addPhone(user.getHomePhone(), Phone.TYPE_OTHER).addWebSite(user.getWebsite())
+            .addOrganisation(user.getOrganisation())
+            .addOrganisationTitle(user.getOrganisationTitle())
+            .addOrganisationDepartment(user.getOrganisationDepartment())
             .addAddress(user.getAddress(),user.getCity(),user.getRegion(),user.getCountry(),user.getPobox(),user.getPostCode(),Constants.billing_address)
             .addAddress(user.getOtherAddress(),user.getOtherCity(),user.getOtherRegion(),user.getOtherCountry(),user.getOtherPobox(),user.getOtherPostCode(),Constants.shipping_address)
             .addGroupMembership(groupId)
@@ -398,11 +401,8 @@ public class ContactManager {
                             c.getString(DataQuery.COLUMN_ORGANISATION_DEPARTMENT);                   
                     contactOp.updateOrganisationTitle(organisation_department, user.getOrganisationDepartment(),uri);
                 }
-                // TODO: update postal address
-                
+        
                 else if (mimeType.equals(StructuredPostal.CONTENT_ITEM_TYPE)) {
-//                    address,city,region,pobox,postcode,country,
-//                    ship_address,ship_city,ship_region,ship_pobox,ship_postcode,ship_country,
                 	String address_label;
                     address_label = c.getString(DataQuery.COLUMN_LABEL_POSTAL);
                     if (address_label.equals(Constants.billing_address))
@@ -699,8 +699,8 @@ final private static class UserIdQuery {
         public static final int COLUMN_WEBSITE_ADDRESS = COLUMN_DATA1;
         
         public static final int COLUMN_ORGANISATION_NAME = COLUMN_DATA1;
-        public static final int COLUMN_ORGANISATION_TITLE = COLUMN_DATA2;
-        public static final int COLUMN_ORGANISATION_DEPARTMENT = COLUMN_DATA3;
+        public static final int COLUMN_ORGANISATION_TITLE = COLUMN_DATA4;
+        public static final int COLUMN_ORGANISATION_DEPARTMENT = COLUMN_DATA5;
         // StructuredPostalCode
         public static final int COLUMN_LABEL_POSTAL = COLUMN_DATA3;
         public static final int COLUMN_ADRESS1_POSTAL = COLUMN_DATA4;
