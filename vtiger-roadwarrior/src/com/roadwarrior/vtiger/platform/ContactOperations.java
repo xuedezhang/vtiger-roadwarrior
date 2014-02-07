@@ -264,10 +264,9 @@ public class ContactOperations {
         return this;
     }
     /**
-     * Adds a website
+     * Adds organisation
      * 
-     * @param phone new phone number for the contact
-     * @param phoneType the type: cell, home, etc.
+     * @param orgnisation organisation the contact
      * @return instance of ContactOperations
      */
     public ContactOperations addOrganisation(String organisation) {
@@ -275,6 +274,37 @@ public class ContactOperations {
         if (!TextUtils.isEmpty(organisation)) {
             mValues.put(Organization.COMPANY, organisation);
             mValues.put(Organization.TYPE, Organization.TYPE_WORK);
+            mValues.put(Organization.MIMETYPE, Organization.CONTENT_ITEM_TYPE);
+            addInsertOp();
+        }
+        return this;
+    }
+    
+    /**
+     * Adds organisation department
+     * 
+     * @param organisation organisation department for the contact
+     * @return instance of ContactOperations
+     */
+    public ContactOperations addOrganisationDepartment(String organisation_department) {
+        mValues.clear();
+        if (!TextUtils.isEmpty(organisation_department)) {
+            mValues.put(Organization.DEPARTMENT, organisation_department);
+            mValues.put(Organization.MIMETYPE, Organization.CONTENT_ITEM_TYPE);
+            addInsertOp();
+        }
+        return this;
+    }
+    /**
+     * Adds organisation title
+     * 
+     * @param organisation organisation department for the contact
+     * @return instance of ContactOperations
+     */
+    public ContactOperations addOrganisationTitle(String organisation_title) {
+        mValues.clear();
+        if (!TextUtils.isEmpty(organisation_title)) {
+            mValues.put(Organization.TITLE, organisation_title);
             mValues.put(Organization.MIMETYPE, Organization.CONTENT_ITEM_TYPE);
             addInsertOp();
         }
@@ -390,7 +420,41 @@ public class ContactOperations {
         }
         return this;
     }
+    /**
+     * Updates organisation title
+     * 
+     * @param existing organisation title stored in contacts provider
+     * @param phone new organisation name for the contact
+     * @param uri Uri for the existing raw contact to be updated
+     * @return instance of ContactOperations
+     */
+    public ContactOperations updateOrganisationTitle(String existingValue, String newvalue,
+            Uri uri) {
+            if (!TextUtils.equals(newvalue,existingValue)) {
+                mValues.clear();
+                mValues.put(Organization.TITLE, newvalue);
+                addUpdateOp(uri);
+            }
+            return this;
+        }
     
+    /**
+     * Updates organisation department
+     * 
+     * @param existing organisation department stored in contacts provider
+     * @param phone new organisation department for the contact
+     * @param uri Uri for the existing raw contact to be updated
+     * @return instance of ContactOperations
+     */
+    public ContactOperations updateOrganisationDepartment(String existingValue, String newvalue,
+            Uri uri) {
+            if (!TextUtils.equals(newvalue,existingValue)) {
+                mValues.clear();
+                mValues.put(Organization.DEPARTMENT, newvalue);
+                addUpdateOp(uri);
+            }
+            return this;
+        }
     /**
      * Updates contact's phone
      * 

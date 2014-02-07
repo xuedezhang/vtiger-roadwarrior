@@ -352,6 +352,9 @@ public class ContactManager {
         String website = null;
         String fax = null;
         String organisation = null;
+        String organisation_department = null;
+        String organisation_title = null;
+
         final Cursor c =
                 resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
                 new String[] {String.valueOf(rawContactId)}, null);
@@ -378,6 +381,14 @@ public class ContactManager {
                     organisation =
                       c.getString(DataQuery.COLUMN_ORGANISATION_NAME);                   
                     contactOp.updateOrganisation(organisation, user.getOrganisation(),uri);
+                    
+                    organisation_title =
+                            c.getString(DataQuery.COLUMN_ORGANISATION_TITLE);                   
+                    contactOp.updateOrganisationTitle(organisation_title, user.getOrganisationTitle(),uri);
+                    
+                    organisation_department =
+                            c.getString(DataQuery.COLUMN_ORGANISATION_DEPARTMENT);                   
+                    contactOp.updateOrganisationTitle(organisation_department, user.getOrganisationDepartment(),uri);
                 }
                 // TODO: update postal address
                 else if (mimeType.equals(Phone.CONTENT_ITEM_TYPE)) {
@@ -427,15 +438,22 @@ public class ContactManager {
         if (otherPhone == null) {
             contactOp.addPhone(user.getHomePhone(), Phone.TYPE_OTHER);
         }
-
         // Add the email address, if present and not updated above
         if (email == null) {
         	Log.d(TAG,"ben on rajoute l email");
             contactOp.addEmail(user.getEmail());
         }
+
         // Add the organisation, if present and not updated above
         if (organisation == null) {
             contactOp.addOrganisation(user.getOrganisation());
+        }
+        // Add the organisation department, if present and not updated above
+        if (organisation_department == null) {
+            contactOp.addOrganisationDepartment(user.getOrganisationDepartment());
+        }
+        if (organisation_title == null) {
+            contactOp.addOrganisationTitle(user.getOrganisationTitle());
         }
     }
     /**
@@ -593,7 +611,9 @@ final private static class UserIdQuery {
         public static final int COLUMN_WEBSITE_ADDRESS = COLUMN_DATA1;
         
         public static final int COLUMN_ORGANISATION_NAME = COLUMN_DATA1;
-       
+        public static final int COLUMN_ORGANISATION_TITLE = COLUMN_DATA2;
+        public static final int COLUMN_ORGANISATION_DEPARTMENT = COLUMN_DATA3;
+        
         public static final String SELECTION = Data.RAW_CONTACT_ID + "=?";
     }
 }

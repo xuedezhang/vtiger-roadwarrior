@@ -35,6 +35,9 @@ public class User {
     private final String mEmail;
     private final String mWebsite;
     private final String mOrganisation;
+    private final String mOrganisationTitle;
+    private final String mOrganisationDepartment;
+
     private final String mCountry;
     private final String mAddress;
     private final String mCity;
@@ -71,6 +74,12 @@ public class User {
     }
     public String getOrganisation() {
         return mOrganisation;
+    }
+    public String getOrganisationTitle() {
+        return mOrganisationTitle;
+    }
+    public String getOrganisationDepartment() {
+        return mOrganisationDepartment;
     }
     public String getCity() {
         return mCity;
@@ -141,13 +150,16 @@ public class User {
 
     public User(String name, String firstName, String lastName,
         String fax,
-    	String cellPhone, String officePhone, String homePhone, String email,String website,String organisation,
+    	String cellPhone, String officePhone, String homePhone, String email,String website,
+    	String organisation,String organisation_title,String organisation_department,
         String address,String city,String region,String pobox,String postcode,String country,
         String otheraddress,String othercity,String otherregion,String otherpobox,String otherpostcode,String othercountry,
         String industry,String AnnualRevenue,
         Boolean deleted, Integer userId) {
     	mCodePostal = postcode;
     	mOrganisation = organisation;
+    	mOrganisationDepartment = organisation_department;
+    	mOrganisationTitle = organisation_title;
     	mCountry = country;
     	mAddress = address;
     	mCity = city;
@@ -190,6 +202,8 @@ public class User {
     	String postcode = null;
     	String ship_address = null;
     	String ship_country = null;
+    	String organisation_title = null;
+    	String organisation_department = null;
 
     	try {
         	Log.i(TAG,"Valueof");
@@ -319,9 +333,10 @@ public class User {
             Log.i("User", contact_no.substring(3));
 //            userId = Integer.parseInt(contact_no.substring(3));
         	userId = user.getString("id").hashCode() | 0x80000;
-
+        	organisation_title =  user.has("title") ? user.getString("title") : null;
+	        organisation_department =  user.has("department") ? user.getString("department") : null;
             return new User("serName", firstName, lastName,fax, cellPhone,
-                    officePhone, homePhone, email,website, organisation,address,city,region,pobox,postcode,country,
+                    officePhone, homePhone, email,website, organisation,organisation_title,organisation_department,address,city,region,pobox,postcode,country,
                     ship_address,ship_city,ship_region,ship_pobox,ship_postcode,ship_country,
                     industry,annual_revenue,
                     deleted, userId);
@@ -348,6 +363,7 @@ public class User {
             return new User("serName", firstName, lastName, cellPhone,
             		fax,
                     officePhone, Phone, email,website, organisation,
+                    organisation_title,organisation_department,
                     address,city,region,pobox,postcode,country,
                     ship_address,ship_city,ship_region,ship_pobox,ship_postcode,ship_country,
                     industry,annual_revenue,
@@ -358,7 +374,8 @@ public class User {
             if (account_no != null){
 	            Log.i("User","account "+ account_no);
 	            Log.i("User", account_no.substring(3));
-	            
+	           
+
 	            if (user.has("email1"))
 	            {
 	            	email = user.getString("email1");
@@ -370,7 +387,7 @@ public class User {
 	        	userId = user.getString("id").hashCode() | 0x90000;
 	
 	            return new User("serName", firstName, lastName,fax, cellPhone,
-	                    officePhone, homePhone, email,website, organisation,
+	                    officePhone, homePhone, email,website, organisation,organisation_title,organisation_department,
 	                    address,city,region,pobox,postcode,country,
 	                    ship_address,ship_city,ship_region,ship_pobox,ship_postcode,ship_country,
 	                    industry,annual_revenue,
