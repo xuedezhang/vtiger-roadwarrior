@@ -374,6 +374,24 @@ public class ContactOperations {
     }
 
     /**
+     * Updates organisation name
+     * 
+     * @param existing organistaion name stored in contacts provider
+     * @param phone new organisation name for the contact
+     * @param uri Uri for the existing raw contact to be updated
+     * @return instance of ContactOperations
+     */
+    public ContactOperations updateOrganisation(String existingOrgnaisation, String organisation,
+        Uri uri) {
+        if (!TextUtils.equals(organisation,existingOrgnaisation)) {
+            mValues.clear();
+            mValues.put(Organization.COMPANY, organisation);
+            addUpdateOp(uri);
+        }
+        return this;
+    }
+    
+    /**
      * Updates contact's phone
      * 
      * @param existingNumber phone number stored in contacts provider

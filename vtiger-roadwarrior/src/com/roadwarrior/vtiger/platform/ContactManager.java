@@ -35,7 +35,8 @@ import android.provider.ContactsContract.CommonDataKinds.Website;
 import android.provider.ContactsContract.CommonDataKinds.Im;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
-import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
+import android.provider.ContactsContract.CommonDataKinds.Organization;
+
 import android.text.format.DateUtils;
 import android.util.Log;
 
@@ -350,6 +351,7 @@ public class ContactManager {
         String email = null;
         String website = null;
         String fax = null;
+        String organisation = null;
         final Cursor c =
                 resolver.query(DataQuery.CONTENT_URI, DataQuery.PROJECTION, DataQuery.SELECTION,
                 new String[] {String.valueOf(rawContactId)}, null);
@@ -372,6 +374,11 @@ public class ContactManager {
                     contactOp.updateName(uri, firstName, lastName, user
                         .getFirstName(), user.getLastName());
                 }
+                if (mimeType.equals(Organization.CONTENT_ITEM_TYPE)) {
+                    organisation =
+                      c.getString(DataQuery.COLUMN_ORGANISATION_NAME);                   
+                    contactOp.updateOrganisation(organisation, user.getOrganisation(),uri);
+                }
                 // TODO: update postal address
                 else if (mimeType.equals(Phone.CONTENT_ITEM_TYPE)) {
                     final int type = c.getInt(DataQuery.COLUMN_PHONE_TYPE);
@@ -391,13 +398,14 @@ public class ContactManager {
                             uri);
                     }
                 }
-
-                else if (Data.MIMETYPE.equals(Website.CONTENT_ITEM_TYPE)) {
+                else if (mimeType.equals(Website.CONTENT_ITEM_TYPE)) {
                     website = c.getString(DataQuery.COLUMN_WEBSITE_ADDRESS);
                     contactOp.updateWebsite(user.getWebsite(),website, uri);               
                     }
-                else if (Data.MIMETYPE.equals(Email.CONTENT_ITEM_TYPE)) {
+                else if (mimeType.equals(Email.CONTENT_ITEM_TYPE)) {                	
                     email = c.getString(DataQuery.COLUMN_EMAIL_ADDRESS);
+                    Log.d(TAG,email);
+                    Log.d(TAG,user.getEmail());
                     contactOp.updateEmail(user.getEmail(), email, uri);               }
             } // while
         } finally {
@@ -422,9 +430,13 @@ public class ContactManager {
 
         // Add the email address, if present and not updated above
         if (email == null) {
+        	Log.d(TAG,"ben on rajoute l email");
             contactOp.addEmail(user.getEmail());
         }
-
+        // Add the organisation, if present and not updated above
+        if (organisation == null) {
+            contactOp.addOrganisation(user.getOrganisation());
+        }
     }
     /**
      * When we first add a sync adapter to the system, the contacts from that
@@ -580,6 +592,8 @@ final private static class UserIdQuery {
 
         public static final int COLUMN_WEBSITE_ADDRESS = COLUMN_DATA1;
         
+        public static final int COLUMN_ORGANISATION_NAME = COLUMN_DATA1;
+       
         public static final String SELECTION = Data.RAW_CONTACT_ID + "=?";
     }
 }
