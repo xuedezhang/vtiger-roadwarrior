@@ -269,47 +269,37 @@ public class ContactOperations {
      * @param orgnisation organisation the contact
      * @return instance of ContactOperations
      */
-    public ContactOperations addOrganisation(String organisation) {
-        mValues.clear();
-        if (!TextUtils.isEmpty(organisation)) {
-            mValues.put(Organization.COMPANY, organisation);
-            mValues.put(Organization.TYPE, Organization.TYPE_WORK);
-            mValues.put(Organization.MIMETYPE, Organization.CONTENT_ITEM_TYPE);
-            addInsertOp();
+    public ContactOperations addOrganisation(String organisation,String organisation_department,String organisation_title) {
+        boolean ok = false;
+    	mValues.clear();
+
+    	
+        if (!TextUtils.isEmpty(organisation_title)) {
+            mValues.put(Organization.TITLE,organisation_title);
+            ok = true;
         }
-        return this;
-    }
-    
-    /**
-     * Adds organisation department
-     * 
-     * @param organisation organisation department for the contact
-     * @return instance of ContactOperations
-     */
-    public ContactOperations addOrganisationDepartment(String organisation_department) {
-        mValues.clear();
         if (!TextUtils.isEmpty(organisation_department)) {
             mValues.put(Organization.DEPARTMENT, organisation_department);
+            ok = true;
+        }
+
+        if (!TextUtils.isEmpty(organisation)) {
+            mValues.put(Organization.COMPANY, organisation);
+            ok = true;
+            
+        }
+        mValues.put(Organization.LABEL,"Organization");
+        if (ok){
+            mValues.put(Organization.TYPE, Organization.TYPE_CUSTOM);
             mValues.put(Organization.MIMETYPE, Organization.CONTENT_ITEM_TYPE);
             addInsertOp();
         }
         return this;
+  
     }
-    /**
-     * Adds organisation title
-     * 
-     * @param organisation organisation department for the contact
-     * @return instance of ContactOperations
-     */
-    public ContactOperations addOrganisationTitle(String organisation_title) {
-        mValues.clear();
-        if (!TextUtils.isEmpty(organisation_title)) {
-            mValues.put(Organization.TITLE, organisation_title);
-            mValues.put(Organization.MIMETYPE, Organization.CONTENT_ITEM_TYPE);
-            addInsertOp();
-        }
-        return this;
-    }
+    
+  
+   
     /**
      * Adds a group membership
      *
@@ -403,40 +393,7 @@ public class ContactOperations {
         return this;
     }
 
-    /**
-     * Updates organisation name
-     * 
-     * @param existing organistaion name stored in contacts provider
-     * @param phone new organisation name for the contact
-     * @param uri Uri for the existing raw contact to be updated
-     * @return instance of ContactOperations
-     */
-    public ContactOperations updateOrganisation(String existingOrgnaisation, String organisation,
-        Uri uri) {
-        if (!TextUtils.equals(organisation,existingOrgnaisation)) {
-            mValues.clear();
-            mValues.put(Organization.COMPANY, organisation);
-            addUpdateOp(uri);
-        }
-        return this;
-    }
-    /**
-     * Updates organisation title
-     * 
-     * @param existing organisation title stored in contacts provider
-     * @param phone new organisation name for the contact
-     * @param uri Uri for the existing raw contact to be updated
-     * @return instance of ContactOperations
-     */
-    public ContactOperations updateOrganisationTitle(String existingValue, String newvalue,
-            Uri uri) {
-            if (!TextUtils.equals(newvalue,existingValue)) {
-                mValues.clear();
-                mValues.put(Organization.TITLE, newvalue);
-                addUpdateOp(uri);
-            }
-            return this;
-        }
+ 
     
     /**
      * generic Updates Field

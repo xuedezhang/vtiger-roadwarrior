@@ -322,9 +322,7 @@ public class ContactManager {
         				  .addEmail(user.getEmail()).addPhone(user.getCellPhone(), 
         								  Phone.TYPE_MOBILE)
             .addPhone(user.getHomePhone(), Phone.TYPE_OTHER).addWebSite(user.getWebsite())
-            .addOrganisation(user.getOrganisation())
-            .addOrganisationTitle(user.getOrganisationTitle())
-            .addOrganisationDepartment(user.getOrganisationDepartment())
+            .addOrganisation(user.getOrganisation(),user.getOrganisationDepartment(),user.getOrganisationTitle())
             .addAddress(user.getAddress(),user.getCity(),user.getRegion(),user.getCountry(),user.getPobox(),user.getPostCode(),Constants.billing_address)
             .addAddress(user.getOtherAddress(),user.getOtherCity(),user.getOtherRegion(),user.getOtherCountry(),user.getOtherPobox(),user.getOtherPostCode(),Constants.shipping_address)
             .addGroupMembership(groupId)
@@ -389,17 +387,23 @@ public class ContactManager {
                         .getFirstName(), user.getLastName());
                 }
                 if (mimeType.equals(Organization.CONTENT_ITEM_TYPE)) {
+                	String label;
+                    label = c.getString(DataQuery.COLUMN_ORGANISATION_LABEL);
+                    if (label.equals("Organization"))
+                    {
+                    // note: the contact's organisation is not sent by vtiger webservice when updated ...
                     organisation =
                       c.getString(DataQuery.COLUMN_ORGANISATION_NAME);                   
-                    contactOp.updateOrganisation(organisation, user.getOrganisation(),uri);
+                    contactOp.updateField(Organization.COMPANY,organisation, user.getOrganisation(),uri);
                     
                     organisation_title =
                             c.getString(DataQuery.COLUMN_ORGANISATION_TITLE);                   
-                    contactOp.updateOrganisationTitle(organisation_title, user.getOrganisationTitle(),uri);
+                    contactOp.updateField(Organization.TITLE,organisation_title, user.getOrganisationTitle(),uri);
                     
                     organisation_department =
                             c.getString(DataQuery.COLUMN_ORGANISATION_DEPARTMENT);                   
-                    contactOp.updateOrganisationTitle(organisation_department, user.getOrganisationDepartment(),uri);
+                    contactOp.updateField(Organization.DEPARTMENT,organisation_department, user.getOrganisationDepartment(),uri);
+                    }
                 }
         
                 else if (mimeType.equals(StructuredPostal.CONTENT_ITEM_TYPE)) {
@@ -527,15 +531,11 @@ public class ContactManager {
         }
 
         // Add the organisation, if present and not updated above
-        if (organisation == null) {
-            contactOp.addOrganisation(user.getOrganisation());
-        }
-        // Add the organisation department, if present and not updated above
-        if (organisation_department == null) {
-            contactOp.addOrganisationDepartment(user.getOrganisationDepartment());
-        }
-        if (organisation_title == null) {
-            contactOp.addOrganisationTitle(user.getOrganisationTitle());
+        if ((organisation == null) && (organisation_title == null) && (organisation_department == null)){		
+        	organisation = user.getOrganisation();
+        	organisation_title = user.getOrganisationTitle();
+        	organisation_department = user.getOrganisationDepartment();
+        	contactOp.addOrganisation(user.getOrganisation(),user.getOrganisationTitle(),user.getOrganisationDepartment());
         }
     }
     /**
@@ -699,6 +699,8 @@ final private static class UserIdQuery {
         public static final int COLUMN_WEBSITE_ADDRESS = COLUMN_DATA1;
         
         public static final int COLUMN_ORGANISATION_NAME = COLUMN_DATA1;
+        public static final int COLUMN_ORGANISATION_TYPE = COLUMN_DATA2;
+        public static final int COLUMN_ORGANISATION_LABEL = COLUMN_DATA3;
         public static final int COLUMN_ORGANISATION_TITLE = COLUMN_DATA4;
         public static final int COLUMN_ORGANISATION_DEPARTMENT = COLUMN_DATA5;
         // StructuredPostalCode
